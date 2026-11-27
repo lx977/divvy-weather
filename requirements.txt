@@ -13,4 +13,7 @@ matplotlib==3.10.9
 seaborn==0.13.2
 jupyter==1.1.1
 ipykernel==7.3.0
-# Teammates: add app/model packages (streamlit, scikit-learn...) below
+# Forecast model + Streamlit app
+scikit-learn==1.7.2
+streamlit==1.65.0
+altair==6.2.2

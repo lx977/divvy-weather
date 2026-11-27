@@ -1,0 +1,20 @@
+{
+  "train_days": 638,
+  "test_days": 122,
+  "test_window": [
+    "2026-06-01",
+    "2026-09-30"
+  ],
+  "casual": {
+    "mape_model": 0.177,
+    "mape_baseline": 0.2882
+  },
+  "member": {
+    "mape_model": 0.1384,
+    "mape_baseline": 0.194
+  },
+  "total": {
+    "mape_model": 0.1463,
+    "mape_baseline": 0.2186
+  }
+}

@@ -12,6 +12,8 @@ Final project for Data Visualization Strategies & Techniques: Divvy bike-share d
 | `pipeline/` | `pipeline.py` (ingest, clean, join, KPI tables), `lineage.py` (OpenLineage events, `lineage_events.jsonl`), `tests/` (format adapter test) |
 | `notebooks/` | EDA notebook and its charts |
 | `deck/` | Week 4 scope deck |
+| `model/` | `forecast.py`: daily demand regression, same-day-last-year baseline, holdout test; `metrics.json` (holdout MAPE) |
+| `app/` | Streamlit app (System B): `streamlit run app/app.py` |
 | `config.yaml`, `dvc.yaml` | Study window, cleaning rules, paths; pipeline stages for `dvc repro` |
 
 ## Hand-off tables
@@ -51,6 +53,17 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 **Raw data (about 480 MB, not in git).** Divvy trip zips come from [divvybikes.com/system-data](https://divvybikes.com/system-data), and the weather file is NOAA GHCN-Daily station USW00014819 (Chicago Midway). Put them anywhere and point `config.local.yaml` at them (the file is git-ignored, so the paths stay on your laptop). Paths can be relative to the repo root, e.g. Lin's copy is `../../MLOps/HW1/partb_data/divvy`. `dvc.yaml` reads the same two files, so `dvc repro` uses your paths too. `dvc.lock` records the raw paths (relative) and file hashes of the last full run.
 
 **Steps** (each one is a DVC stage and an OpenLineage job): `clean_trips` → `clean_weather` → `match_stations` → `aggregate_trips` → `join_weather` → `weather_sensitivity` → `export`. `python pipeline/pipeline.py fetch_gbfs` saves a new dated GBFS snapshot. It isn't part of `dvc repro` because it needs the network; to use the new file, point `stations.gbfs_snapshot` in `config.yaml` at it.
+
+## Forecast model and app (H1)
+
+`python model/forecast.py` trains on days before 2026-06-01 and tests on Jun–Sep 2026 (122 days the model hasn't seen). It writes `model/metrics.json` and `data/exports/forecast_holdout.csv` (actual, model and baseline per day, for Tableau or the deck).
+
+- **Model:** one linear regression per rider type on log(1 + daily rides). Features: `tavg_f` and its square, `precip_in`, `rain_day`, `snow_depth_in`, `wind_mph`, `is_holiday`, weekday, month and a linear trend. Total = casual + member. `snow_depth_in` is missing Apr–Oct because Midway only reports it Nov–Mar, so it's set to 0.
+- **Baseline:** rides on the same weekday a year earlier (364 days before).
+- **Holdout result (MAPE):** total 14.6% vs 21.9% for the baseline (a third less error); casual 17.7% vs 28.8%; member 13.8% vs 19.4%.
+- **Known gap:** the holiday effect is one average across all holidays, driven by winter ones, so summer holidays like Juneteenth come out too low. LightGBM, or splitting the holiday effect by season, is the appendix follow-up.
+
+`streamlit run app/app.py`: pick a date and the weather and get forecast casual, member and total rides against the same day last year. It also shows the temperature response by rider type, the busiest docked stations to stage bikes at, and the holdout chart. The model refits on all days at start-up (under a second).
 
 ## Data notes (for the audit slide)
 
