@@ -12,7 +12,7 @@ Final project for Data Visualization Strategies & Techniques: Divvy bike-share d
 | `pipeline/` | `pipeline.py` (ingest, clean, join, KPI tables), `lineage.py` (OpenLineage events, `lineage_events.jsonl`), `tests/` (format adapter test) |
 | `notebooks/` | EDA notebook and its charts |
 | `deck/` | Week 4 scope deck |
-| `model/` | `forecast.py`: daily demand regression, same-day-last-year baseline, holdout test; `metrics.json` (holdout MAPE) |
+| `model/` | `forecast.py`: daily demand regression, same-day-last-year baseline, holdout test; `metrics.json` (holdout MAPE) and `forecast_holdout.csv` (per-day results) |
 | `app/` | Streamlit app (System B): `streamlit run app/app.py` |
 | `config.yaml`, `dvc.yaml` | Study window, cleaning rules, paths; pipeline stages for `dvc repro` |
 
@@ -56,7 +56,7 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 
 ## Forecast model and app (H1)
 
-`python model/forecast.py` trains on days before 2026-06-01 and tests on Jun–Sep 2026 (122 days the model hasn't seen). It writes `model/metrics.json` and `data/exports/forecast_holdout.csv` (actual, model and baseline per day, for Tableau or the deck).
+`python model/forecast.py` trains on days before 2026-06-01 and tests on Jun–Sep 2026 (122 days the model hasn't seen). It writes `model/metrics.json` and `model/forecast_holdout.csv` (actual, model and baseline per day, for Tableau or the deck).
 
 - **Model:** one linear regression per rider type on log(1 + daily rides). Features: `tavg_f` and its square, `precip_in`, `rain_day`, `snow_depth_in`, `wind_mph`, `is_holiday`, weekday, month and a linear trend. Total = casual + member. `snow_depth_in` is missing Apr–Oct because Midway only reports it Nov–Mar, so it's set to 0.
 - **Baseline:** rides on the same weekday a year earlier (364 days before).

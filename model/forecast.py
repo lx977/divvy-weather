@@ -11,7 +11,7 @@ Baseline: "same day last year" = rides 364 days earlier (same weekday).
 Holdout: train before 2026-06-01, test 2026-06-01 to 2026-09-30.
 
 Run:  python model/forecast.py   -> model/metrics.json,
-                                    data/exports/forecast_holdout.csv
+                                    model/forecast_holdout.csv
 """
 import json
 import os
@@ -112,6 +112,6 @@ if __name__ == "__main__":
     with open(os.path.join(ROOT, "model", "metrics.json"), "w",
               encoding="utf-8") as fh:
         json.dump(metrics, fh, indent=2)
-    rows.to_csv(os.path.join(ROOT, "data", "exports",
-                             "forecast_holdout.csv"), index=False)
+    rows.to_csv(os.path.join(ROOT, "model", "forecast_holdout.csv"),
+                index=False)
     print(json.dumps(metrics, indent=2))
