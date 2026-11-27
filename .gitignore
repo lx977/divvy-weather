@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+
+# personal raw-data paths (copy config.local.example.yaml)
+config.local.yaml
+
+# rebuildable trip-level data (~12M rows) and raw downloads
+data/interim/
+data/raw/*
+!data/raw/gbfs_station_information_2026-11-26.json
+*.zip
+!pipeline/tests/fixtures/*.zip
+

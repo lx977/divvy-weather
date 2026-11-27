@@ -1,0 +1,6 @@
+# Copy to config.local.yaml (git-ignored) and point at your copy of the raw data.
+#   cp config.local.example.yaml config.local.yaml
+# Absolute paths are fine there; they never get committed.
+raw:
+  divvy_dir: data/raw/divvy                     # folder of Divvy trip zips
+  noaa_csv: data/raw/noaa/USW00014819.csv       # NOAA GHCN-Daily, Chicago Midway

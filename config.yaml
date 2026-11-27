@@ -1,0 +1,21 @@
+# Pipeline settings shared by the team. Raw-data paths are per person:
+# copy config.local.example.yaml to config.local.yaml (git-ignored) and edit.
+
+window:                    # study window, inclusive
+  start: "2024-09-01"
+  end: "2026-09-30"
+
+cleaning:
+  min_minutes: 1           # Divvy: rides < 60 s are false starts
+  max_minutes: 1440        # > 24 h = lost / stolen bike
+  drop_rideable_types: [electric_scooter]   # scooters appear in Sep 2024 only
+
+stations:
+  gbfs_url: https://gbfs.divvybikes.com/gbfs/gbfs.json
+  gbfs_snapshot: data/raw/gbfs_station_information_2026-11-26.json
+  max_match_m: 150         # nearest-coordinate fallback radius (docked stations)
+
+paths:
+  interim: data/interim      # trip-level parquet, git-ignored
+  processed: data/processed  # hand-off parquet (Streamlit)
+  exports: data/exports      # hand-off CSV (Tableau)

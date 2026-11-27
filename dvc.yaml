@@ -1,0 +1,77 @@
+# Reproduce every table:  dvc repro   (paths come from config.yaml and
+# config.local.yaml; fetch_gbfs is run by hand because it needs the network)
+vars:
+  - config.yaml
+  - config.local.yaml
+
+stages:
+  clean_trips:
+    cmd: python pipeline/pipeline.py clean_trips --force
+    deps:
+      - pipeline/pipeline.py
+      - config.yaml
+      - ${raw.divvy_dir}
+    outs:
+      - ${paths.interim}/trips_clean:
+          cache: false
+
+  clean_weather:
+    cmd: python pipeline/pipeline.py clean_weather
+    deps:
+      - pipeline/pipeline.py
+      - config.yaml
+      - ${raw.noaa_csv}
+    outs:
+      - ${paths.interim}/weather_daily.parquet:
+          cache: false
+
+  match_stations:
+    cmd: python pipeline/pipeline.py match_stations
+    deps:
+      - pipeline/pipeline.py
+      - config.yaml
+      - ${stations.gbfs_snapshot}
+      - ${paths.interim}/trips_clean
+    outs:
+      - ${paths.processed}/station_match.parquet:
+          cache: false
+
+  aggregate_trips:
+    cmd: python pipeline/pipeline.py aggregate_trips
+    deps:
+      - pipeline/pipeline.py
+      - config.yaml
+      - ${paths.interim}/trips_clean
+      - ${paths.processed}/station_match.parquet
+    outs:
+      - ${paths.processed}/daily_rides.parquet:
+          cache: false
+      - ${paths.processed}/hourly_rides.parquet:
+          cache: false
+      - ${paths.processed}/station_rides.parquet:
+          cache: false
+      - ${paths.processed}/trip_quality.parquet:
+          cache: false
+
+  join_weather:
+    cmd: python pipeline/pipeline.py join_weather
+    deps:
+      - pipeline/pipeline.py
+      - ${paths.processed}/daily_rides.parquet
+      - ${paths.interim}/weather_daily.parquet
+    outs:
+      - ${paths.processed}/daily_rides_weather.parquet:
+          cache: false
+
+  export:
+    cmd: python pipeline/pipeline.py export
+    deps:
+      - pipeline/pipeline.py
+      - ${paths.processed}/daily_rides_weather.parquet
+      - ${paths.processed}/hourly_rides.parquet
+      - ${paths.processed}/station_rides.parquet
+      - ${paths.processed}/trip_quality.parquet
+      - ${paths.processed}/station_match.parquet
+    outs:
+      - ${paths.exports}:
+          cache: false

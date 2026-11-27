@@ -2,8 +2,8 @@
 `lineage_run(...)`, which records a START and a COMPLETE (or FAIL) event
 with the step's input and output datasets, their schemas, and row counts.
 
-Events are appended to `lineage_events.jsonl`. `send_to_marquez.py`
-replays them into Marquez, which draws the lineage graph.
+Events are appended to `lineage_events.jsonl` (committed as provenance).
+Any OpenLineage backend (e.g. Marquez) can replay them to draw the graph.
 """
 import os
 from contextlib import contextmanager
@@ -18,8 +18,8 @@ from openlineage.client.facet_v2 import (documentation_job,
 from openlineage.client.serde import Serde
 
 NAMESPACE = "divvy_weather_reporting"   # job namespace in Marquez
-DATA_NS = "file://hw1"                   # dataset namespace (local files)
-PRODUCER = "https://github.com/linx5/mlops-hw1-partb"
+DATA_NS = "file://divvy-weather"         # dataset namespace (repo files)
+PRODUCER = "https://github.com/lx977/divvy-weather"
 EVENTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            "lineage_events.jsonl")
 
@@ -46,7 +46,7 @@ def _emit(event):
 def lineage_run(job_name, description, inputs, outputs):
     """Wrap one pipeline step.
 
-    inputs / outputs: lists of dataset names (paths relative to HW1/).
+    inputs / outputs: lists of dataset names (paths relative to the repo).
     The body can fill ctx["schemas"][name] = dataframe to attach output
     schemas + row counts, ctx["input_schemas"][name] likewise, and
     ctx["row_counts"][name] = n to override the row count.

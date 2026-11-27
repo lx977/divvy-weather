@@ -1,0 +1,15 @@
+# Python 3.10+. Tested with these pins (pip install -r requirements.txt).
+# Pipeline
+pandas==2.3.3
+numpy==2.2.6
+pyarrow==25.0.1
+pyyaml==6.0.3
+holidays==0.107
+openlineage-python==1.54.0
+dvc==3.67.1
+# EDA notebook
+matplotlib==3.10.9
+seaborn==0.13.2
+jupyter==1.1.1
+ipykernel==7.3.0
+# Teammates: add app/model packages (streamlit, scikit-learn...) below
