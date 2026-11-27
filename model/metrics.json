@@ -6,15 +6,15 @@
     "2026-09-30"
   ],
   "casual": {
-    "mape_model": 0.177,
+    "mape_model": 0.1744,
     "mape_baseline": 0.2882
   },
   "member": {
-    "mape_model": 0.1384,
+    "mape_model": 0.1343,
     "mape_baseline": 0.194
   },
   "total": {
-    "mape_model": 0.1463,
+    "mape_model": 0.1404,
     "mape_baseline": 0.2186
   }
 }

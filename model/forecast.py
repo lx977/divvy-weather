@@ -3,7 +3,9 @@
 One linear regression per rider type (casual, member) on log(1 + rides);
 total = casual + member. Features:
   weather  tavg_f, tavg_f^2, precip_in, rain_day, snow_depth_in, wind_mph
-  calendar weekday, month, is_holiday, trend (years since the first day)
+  calendar weekday, month, trend (years since the first day), and
+           is_holiday split by season: summer holidays (Apr-Sep) lift
+           casual rides, winter ones cut both rider types
 snow_depth_in is NaN from April to October (Midway only reports snow depth
 Nov-Mar), so it is imputed as 0.
 
@@ -38,13 +40,15 @@ def features(df):
     """Model matrix from columns date, tavg_f, precip_in, snow_depth_in,
     wind_mph, is_holiday (rain_day is derived from precip_in)."""
     date = pd.to_datetime(df["date"])
+    warm = date.dt.month.between(4, 9).astype(int)
     x = pd.DataFrame({
         "tavg_f": df["tavg_f"], "tavg_f2": df["tavg_f"] ** 2,
         "precip_in": df["precip_in"],
         "rain_day": (df["precip_in"] >= 0.1).astype(int),
         "snow_depth_in": df["snow_depth_in"].fillna(0),
         "wind_mph": df["wind_mph"],
-        "is_holiday": df["is_holiday"].astype(int),
+        "holiday_cold": df["is_holiday"].astype(int) * (1 - warm),
+        "holiday_warm": df["is_holiday"].astype(int) * warm,
         "trend": (date - ORIGIN).dt.days / 365.25,
     }, index=df.index)
     for d in DAYS[1:]:                                  # Monday = reference

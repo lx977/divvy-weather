@@ -1,0 +1,14 @@
+{
+  "casual": {
+    "mape_lgbm": 0.1621,
+    "mape_linear": 0.1744
+  },
+  "member": {
+    "mape_lgbm": 0.1444,
+    "mape_linear": 0.1343
+  },
+  "total": {
+    "mape_lgbm": 0.1401,
+    "mape_linear": 0.1404
+  }
+}

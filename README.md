@@ -58,10 +58,10 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 
 `python model/forecast.py` trains on days before 2026-06-01 and tests on Jun–Sep 2026 (122 days the model hasn't seen). It writes `model/metrics.json` and `model/forecast_holdout.csv` (actual, model and baseline per day, for Tableau or the deck).
 
-- **Model:** one linear regression per rider type on log(1 + daily rides). Features: `tavg_f` and its square, `precip_in`, `rain_day`, `snow_depth_in`, `wind_mph`, `is_holiday`, weekday, month and a linear trend. Total = casual + member. `snow_depth_in` is missing Apr–Oct because Midway only reports it Nov–Mar, so it's set to 0.
+- **Model:** one linear regression per rider type on log(1 + daily rides). Features: `tavg_f` and its square, `precip_in`, `rain_day`, `snow_depth_in`, `wind_mph`, weekday, month, a linear trend, and holidays split by season (Apr–Sep vs. Oct–Mar), because summer holidays lift casual rides while winter ones cut both rider types. Total = casual + member. `snow_depth_in` is missing Apr–Oct because Midway only reports it Nov–Mar, so it's set to 0.
 - **Baseline:** rides on the same weekday a year earlier (364 days before).
-- **Holdout result (MAPE):** total 14.6% vs 21.9% for the baseline (a third less error); casual 17.7% vs 28.8%; member 13.8% vs 19.4%.
-- **Known gap:** the holiday effect is one average across all holidays, driven by winter ones, so summer holidays like Juneteenth come out too low. LightGBM, or splitting the holiday effect by season, is the appendix follow-up.
+- **Holdout result (MAPE):** total 14.0% vs 21.9% for the baseline (36% less error); casual 17.4% vs 28.8%; member 13.4% vs 19.4%.
+- **Appendix, LightGBM** (`python model/lgbm_appendix.py` → `model/metrics_lgbm.json`): same features and holdout, total MAPE 14.0% vs 14.0% for the linear model. It's no more accurate, so the interpretable linear model stays. Juneteenth is still under-forecast (26.6k vs 33.7k actual), because there are only two years of summer holidays to learn from.
 
 `streamlit run app/app.py`: pick a date and the weather and get forecast casual, member and total rides against the same day last year. It also shows the temperature response by rider type, the busiest docked stations to stage bikes at, and the holdout chart. The model refits on all days at start-up (under a second).
 
