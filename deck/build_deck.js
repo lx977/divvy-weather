@@ -162,7 +162,7 @@ pres.addSection({ title: "Act I · Context" });
   stat(s, 6.5, 3.7, 3.0, `${pct(T.mape_model, 1)} vs ${pct(T.mape_baseline, 1)}`, "forecast error vs same-day-last-year", C.accent4, true);
   txt(s, "Divvy Operations Advisory  ·  Data Visualization Strategies & Techniques  ·  Final briefing, December 2026",
     { x: 0.5, y: 5.1, w: 9, h: 0.3, fontSize: 9, color: C.accent6 });
-  s.addNotes(`Hook (under a minute): same city, same bikes, two kinds of demand. Members ride in any weather; casual riders show up only when it is warm and dry. Today Divvy plans trucks and staff as if demand were steady. We show the gap, prove it with ${M(D.total_rides)} rides and two years of Midway weather, and hand you two tools: a monitor (Tableau) and a forecast you can steer (Streamlit). The ask at the end: approve a warm-season pilot at 20 lakefront stations.`);
+  s.addNotes(`Hook (under a minute): same city, same bikes, two kinds of demand. Members ride in any weather; casual riders show up only when it is warm and dry. A plan that treats demand as steady puts trucks and staff in the wrong place. We show the gap, prove it with ${M(D.total_rides)} rides and two years of Midway weather, and hand you two tools: a monitor (Tableau) and a forecast you can steer (Streamlit). The ask at the end: approve a warm-season pilot at 20 lakefront stations.`);
 }
 {
   const s = content("Act I · Context", "The decision, the KPIs, the hypotheses",
@@ -192,7 +192,7 @@ pres.addSection({ title: "Act I · Context" });
     txt(s, h, { x: 5.7, y, w: 3.8, h: 0.28, fontSize: 14, bold: true, color: C.text2 });
     txt(s, b, { x: 5.7, y: y + 0.28, w: 3.8, h: 0.3, fontSize: 11, color: C.accent5 });
   });
-  s.addNotes("Problem statement: Divvy operations sets truck shifts and rebalancing routes on a fixed weekly rhythm. Five KPIs decide whether that works over time; KPI 2 (coral) is the headline. Both hypotheses are supported, and the rest of the talk shows how we know.");
+  s.addNotes("Problem statement: if truck shifts and rebalancing routes follow a fixed weekly rhythm, they ignore the weather. Five KPIs decide whether that works over time; KPI 2 (coral) is the headline. Both hypotheses are supported, and the rest of the talk shows how we know.");
 }
 
 // ========================================================= ACT II =======
@@ -227,11 +227,11 @@ pres.addSection({ title: "Act II · Emotion" });
     [pct(D.dockless_share, 1), "Rides with no start station; GPS rounded ~1 km"],
   ];
   traps.forEach(([h, b], i) => card(s, 0.5 + i * 2.3, 3.72, 2.15, 1.3, h, b));
-  s.addNotes("Audit method: every trap was found by profiling each file, not by accident. The Jun 2025 ID switch is the one that would have broken station capacity: none of the pre-June IDs match the live feed. Also flagged: dock capacity is a 2026-11-26 snapshot applied to past rides, station names change for the same ID (CHI01747 was 'Streeter Dr & Grand Ave', now 'Navy Pier'), and Midway does not report average temperature or snowfall in this window.");
+  s.addNotes("Audit method: every trap was found by profiling each file, not by accident. The Jun 2025 ID switch is the one that would have broken station capacity: none of the pre-June IDs match the live feed. Also flagged: dock capacity is a 2026-11-26 snapshot applied to past rides, station names change for the same ID (CHI01747 was 'Streeter Dr & Grand Ave', now 'Navy Pier'), and Midway reports no average temperature and snowfall on only 1 of 760 days in this window.");
 }
 {
   const s = content("Act II · Emotion", "Data hygiene and transformation",
-    "A reproducible engine turns 12.5M noisy rows into five decision tables");
+    "A reproducible engine turns 12.5M noisy rows into seven small hand-off tables");
   const steps = [["Ingest", "zip by zip, month check"], ["Adapt", "any Divvy format → 13 columns"],
     ["Clean", "drop false starts, > 24 h, scooters"], ["Match", "trips → docks: ID, name, 150 m"],
     ["Join", "weather, holidays, areas"], ["Publish", "KPI tables, DVC, lineage"]];
@@ -256,7 +256,7 @@ pres.addSection({ title: "Act II · Emotion" });
   { x: 5.2, y: 2.6, w: 4.3, h: 1.9, barDir: "bar", chartColors: [MEMBER, MEMBER, MEMBER, CASUAL], showValue: true, dataLabelPosition: "outEnd",
     dataLabelFormatCode: "0.0\"%\"", showTitle: true, title: `${pct(1 - mm.unmatched, 1)} of station trips matched to a dock with capacity`,
     showLegend: false, valAxisHidden: true, catAxisOrientation: "maxMin", ...axis, valGridLine: { style: "none" }, objectName: id("match") });
-  txt(s, "Imputation: average temp = (max + min) / 2; snow depth = 0 Apr–Oct, when Midway doesn't measure it.",
+  txt(s, "Imputation: average temp = (max + min) / 2 (Midway reports none); in the forecast, missing snow depth (Apr–Oct, when it isn't measured) = 0.",
     { x: 5.2, y: 4.6, w: 4.3, h: 0.5, fontSize: 10, color: C.accent5 });
   s.addNotes(`Six steps, one command (dvc repro). The adapter means older Divvy files (2013-2019 quarterly formats) can be added without touching downstream code; it is unit-tested on a 2019 sample. Before/after: ${M(q.rows_raw)} raw rows → ${M(q.rows_clean)} clean rides. Station matching is the hard join: before June 2025, ${pct(D.match_era.legacy.name, 1)} of trips match by name because the IDs changed; after, ${pct(D.match_era.chi.id, 1)} match by ID.`);
 }
@@ -264,22 +264,23 @@ pres.addSection({ title: "Act II · Emotion" });
   const s = content("Act II · Emotion", "Empirical signals: two riders, two weathers",
     "Trigger: a warm, dry day. Mechanism: casual riders arrive. Impact: the wrong docks run dry.");
   const labels = D.band.labels.map((l) => l.replace("F", "°F"));
+  const rainLabels = labels.map((l, i) => `${l}\n${D.rain_days[i]} rain days`);
   s.addChart(pres.charts.BAR, [
     { name: "Member", labels, values: D.band.member }, { name: "Casual", labels, values: D.band.casual },
   ], { x: 0.5, y: 1.35, w: 4.5, h: 2.75, barDir: "col", barGapWidthPct: 40, chartColors: [MEMBER, CASUAL],
     showTitle: true, title: "Average rides per day by temperature", showLegend: true, legendPos: "t",
     valAxisLabelFormatCode: "#,##0", ...axis, objectName: id("temp-bands") });
   s.addChart(pres.charts.BAR, [
-    { name: "Member", labels, values: D.rain_drop.member.map((v) => +(100 * v).toFixed(0)) },
-    { name: "Casual", labels, values: D.rain_drop.casual.map((v) => +(100 * v).toFixed(0)) },
+    { name: "Member", labels: rainLabels, values: D.rain_drop.member.map((v) => +(100 * v).toFixed(0)) },
+    { name: "Casual", labels: rainLabels, values: D.rain_drop.casual.map((v) => +(100 * v).toFixed(0)) },
   ], { x: 5.1, y: 1.35, w: 4.4, h: 2.75, barDir: "col", barGapWidthPct: 40, chartColors: [MEMBER, CASUAL],
     showTitle: true, title: "Rides lost on rain days vs dry days, same temperature (%)", showLegend: true, legendPos: "t",
     showValue: true, dataLabelPosition: "outEnd", valAxisHidden: true, ...axis, valGridLine: { style: "none" }, objectName: id("rain") });
   stat(s, 0.5, 4.25, 2.2, `${D.band_ratio.casual}x vs ${D.band_ratio.member}x`, "casual vs member, warmest vs coldest days", C.accent2, false, 20);
-  stat(s, 2.85, 4.25, 2.2, `${signed(sens.casual.pct_per_10f)} vs ${signed(sens.member.pct_per_10f)}`, "per +10°F, same weekday and rain", C.accent2, false, 20);
+  stat(s, 2.85, 4.25, 2.2, `${signed(sens.casual.pct_per_10f)} vs ${signed(sens.member.pct_per_10f)}`, "per +10°F, same day type and rain", C.accent2, false, 20);
   stat(s, 5.2, 4.25, 2.2, `${signed(sens.casual.pct_rain_day)} vs ${signed(sens.member.pct_rain_day)}`, "on a rain day (≥ 0.1 in)", C.accent2, false, 20);
   stat(s, 7.55, 4.25, 1.95, `r = ${D.corr_temp}`, "temperature vs daily rides", C.accent1, false, 20);
-  s.addNotes(`Two charts, then two numbers (Tufte's 2+2). Left: from the coldest to the warmest days casual rides rise ${D.band_ratio.casual}x, members ${D.band_ratio.member}x — that includes the season. Holding the calendar fixed (regression, KPI 2), +10°F adds ${signed(sens.casual.pct_per_10f)} casual vs ${signed(sens.member.pct_per_10f)} member rides. Right: rain hurts casual riders more at every temperature. Operational impact: the lakefront tourist docks swing hardest.`);
+  s.addNotes(`Two charts, then two numbers (Tufte's 2+2). Left: from the coldest to the warmest days casual rides rise ${D.band_ratio.casual}x, members ${D.band_ratio.member}x — that includes the season. Controlling for rain, weekends, holidays and growth (regression, KPI 2), +10°F adds ${signed(sens.casual.pct_per_10f)} casual vs ${signed(sens.member.pct_per_10f)} member rides. Right: rain hurts casual riders more at every temperature (the coldest and warmest bands rest on only ${D.rain_days[0]} and ${D.rain_days[4]} rain days). Operational impact: the lakefront tourist docks swing hardest.`);
 }
 {
   const s = content("Act II · Emotion", "Analytics architecture and technology stack",
@@ -299,7 +300,7 @@ pres.addSection({ title: "Act II · Emotion" });
     if (i < 3) s.addShape(pres.shapes.RIGHT_ARROW, { x: x + 2.04, y: 2.5, w: 0.24, h: 0.3, fill: { color: C.accent3 }, line: { color: C.accent3 }, objectName: id("arrow") });
   });
   const why = [
-    ["Reproducible", "dvc repro rebuilds every table from the raw files; each step logs its inputs, schema and row counts."],
+    ["Reproducible", "dvc repro rebuilds every data table from the raw files; each step logs its inputs, schema and row counts."],
     ["Right-sized", `760 daily rows suit an interpretable regression. LightGBM scored ${pct(D.lgbm.total.mape_lgbm, 1)} vs ${pct(D.lgbm.total.mape_linear, 1)}, so it adds nothing.`],
     ["Two jobs, two tools", "Tableau for at-a-glance monitoring; Streamlit for inputs and live model inference."],
   ];
@@ -351,7 +352,7 @@ pres.addSection({ title: "Act III · Evidence" });
     { name: "Extra revenue", labels: names, values: keys.map((x) => sc[x].revenue_usd / 1000) },
     { name: "Extra truck cost", labels: names, values: keys.map((x) => sc[x].cost_usd / 1000) },
   ], { x: 0.5, y: 1.35, w: 4.6, h: 2.3, barDir: "col", barGapWidthPct: 50, chartColors: [MEMBER, GREY],
-    showTitle: true, title: `One summer, ${roi.target_days} warm weekend days, 20 stations ($k)`, showLegend: true, legendPos: "t",
+    showTitle: true, title: `One warm season, ${roi.target_days} warm weekend days, 20 stations ($k)`, showLegend: true, legendPos: "t",
     showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisHidden: true, ...axis, valGridLine: { style: "none" }, objectName: id("roi") });
   stat(s, 0.5, 3.8, 1.5, usd(sc.low.net_usd), "net, low", C.accent5);
   stat(s, 2.05, 3.8, 1.5, usd(sc.base.net_usd), "net, base", C.accent1);
@@ -413,7 +414,7 @@ pres.addSection({ title: "Appendix" });
   s.addTable([[head("KPI 2"), head("+10°F"), head("Rain"), head("Weekend"), head("Holiday")], ...D.sensitivity.map(srow)], {
     x: 5.3, y: 3.75, w: 4.2, colW: [0.9, 0.8, 0.8, 0.85, 0.85], fontSize: 11, color: C.text1, align: "center",
     border: { type: "solid", pt: 0.5, color: "D5DEE0" }, rowH: 0.34, objectName: id("sens") });
-  s.addNotes("If asked why not a fancier model: LightGBM with the same features matches but does not beat the regression on total rides, and it cannot be explained to an operations lead. Known miss: Juneteenth is under-forecast because there are only two summers of holidays to learn from.");
+  s.addNotes(`If asked why not a fancier model: LightGBM with the same features ties on total rides (${pct(D.lgbm.total.mape_lgbm, 1)} vs ${pct(D.lgbm.total.mape_linear, 1)}), is a little better on casual and worse on member riders, and cannot be explained to an operations lead. Known miss: Juneteenth is under-forecast because there are only two summers of holidays to learn from.`);
 }
 {
   const s = content("Appendix", "Appendix B · Data audit and limitations", "What the numbers can and can't support");
@@ -433,7 +434,7 @@ pres.addSection({ title: "Appendix" });
     { text: "ROI uses list prices and an assumed truck-hour cost; it is a range, not a budget.", options: { bullet: true, breakLine: true } },
     { text: "Two years of data: summer holidays and extreme heat have few examples.", options: { bullet: true } },
   ], { x: 5.2, y: 1.4, w: 4.3, h: 3.6, fontSize: 12, paraSpaceAfter: 6 });
-  s.addNotes("Use this slide for Q&A on data quality. Every limitation here is also logged in the README data notes and in the pipeline's quality tables.");
+  s.addNotes("Use this slide for Q&A on data quality. Every limitation here is also written up in the README data notes.");
 }
 
 (async () => {

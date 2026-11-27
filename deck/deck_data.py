@@ -40,7 +40,8 @@ def main():
                          values=["casual_rides", "member_rides"],
                          aggfunc="mean").loc[ORDER]
     drop = {w: (1 - rain[(f"{w}_rides", 1)] / rain[(f"{w}_rides", 0)])
-            .round(3).tolist() for w in ["casual", "member"]}
+            .round(4).tolist() for w in ["casual", "member"]}
+    rain_days = d.groupby("temp_band")["rain_day"].sum().loc[ORDER]
     q = read("trip_quality").sum(numeric_only=True)
     m = read("station_match")
     era = m["raw_id"].str.startswith("CHI", na=False).map(
@@ -64,6 +65,7 @@ def main():
                                 / band[f"{w}_rides"].iloc[0], 1)
                        for w in ["casual", "member"]},
         "rain_drop": drop,
+        "rain_days": rain_days.astype(int).tolist(),
         "quality": {k: int(q[k]) for k in
                     ["rows_raw", "too_short", "too_long_or_negative",
                      "scooters_dropped", "rows_clean",
