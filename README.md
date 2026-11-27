@@ -8,7 +8,7 @@ Final project for Data Visualization Strategies & Techniques: Divvy bike-share d
 |---|---|
 | `data/exports/` | Hand-off tables (CSV) for Tableau |
 | `data/processed/` | The same tables as parquet for Streamlit, plus `daily_rides` (day × rider type × bike type) |
-| `data/raw/` | Dated GBFS station snapshot (`gbfs_station_information_2026-11-26.json`). Raw trip and weather files stay outside git, see below |
+| `data/raw/` | Dated GBFS station snapshot (`gbfs_station_information_2026-11-26.json`) and Chicago community-area boundaries (GeoJSON). Raw trip and weather files stay outside git, see below |
 | `pipeline/` | `pipeline.py` (ingest, clean, join, KPI tables), `lineage.py` (OpenLineage events, `lineage_events.jsonl`), `tests/` (format adapter test) |
 | `notebooks/` | EDA notebook and its charts |
 | `deck/` | Week 4 scope deck |
@@ -20,15 +20,20 @@ The apps read these small aggregated tables only; none of them touch the 12M tri
 
 | Table | One row per | Columns |
 |---|---|---|
-| `daily_rides_weather` | day (760) | `date`, `casual_rides`, `member_rides`, `total_rides`, `avg_min`, Midway weather (`tmax_f`, `tmin_f`, `tavg_f`, `precip_in`, `snow_in`, `snow_depth_in`, `wind_mph`, weather-type flags), `rain_day`, `snow_on_ground`, `temp_band`, `weekday`, `is_weekend`, `month`, **`is_holiday`, `holiday_name`** |
+| `daily_rides_weather` | day (760) | `date`, `casual_rides`, `member_rides`, `total_rides`, `avg_min`, Midway weather (`tmax_f`, `tmin_f`, `tavg_f`, `precip_in`, `snow_in`, `snow_depth_in`, `wind_mph`, weather-type flags), `rain_day`, `snow_on_ground`, `temp_band`, `weekday`, `is_weekend`, `month`, **`is_holiday`, `holiday_name`, `dockless_rides`, `dockless_share`** |
 | `hourly_rides` | weekday × hour × rider type | `weekday`, `hour`, `member_casual`, `rides` |
-| `station_rides` | station × rider type | `start_station_name`, `member_casual`, `rides` (starts), **`station_id`, `short_name`, `lat`, `lng`, `capacity`, `is_public_rack`, `end_rides`, `active_days`, `rides_per_dock_per_day`, `match_method`** |
+| `station_rides` | station × rider type | `start_station_name`, `member_casual`, `rides` (starts), **`station_id`, `short_name`, `lat`, `lng`, `capacity`, `is_public_rack`, `end_rides`, `active_days`, `rides_per_dock_per_day`, `match_method`, `community_area`** |
 | `trip_quality` | raw file | `month`, `inner_file`, `rows_raw`, `duplicates`, `too_short`, `too_long_or_negative`, `label_matches_data`, `missing_start_station`, `rows_clean`, **`scooters_dropped`** |
+| `area_rides` (new) | community area × rider type | `community_area` (77 areas + "Outside Chicago"), `member_casual`, `rides`, `station_rides`, `dockless_rides` |
+| `weather_sensitivity` (new, KPI 2) | rider type (casual, member, total) | `pct_per_10f`, `pct_rain_day`, `pct_weekend`, `pct_holiday`, `pct_per_year_trend`, `r2`, `n_days` |
 | `station_match` (new) | trip station (ID + name) | raw ID, name, trips, first/last date, median coordinates, matched GBFS station, `match_method`, `match_dist_m` |
 
 Definitions:
 
 - `rides_per_dock_per_day` (KPI 4) = (start + end rides) ÷ `capacity` ÷ `active_days`. `active_days` counts the days from the station's first ride to its last in the window. The value is per rider-type row, so add the two rows to get the station total. It is empty for public racks and unmatched stations.
+- `weather_sensitivity` (KPI 2): OLS of log daily rides on `tavg_f`, `rain_day`, `is_weekend`, `is_holiday` and a linear trend, fitted separately per rider type. `pct_per_10f` = exp(10 × coefficient) − 1, so it's the % change in rides for +10°F at the same rain, weekday type and holiday status. It's one average slope; the real curve flattens above 80°F.
+- `dockless_share` (KPI 5) = rides with no start station ÷ all rides, per day.
+- `community_area`: station rides use the station's location. Dockless rides use their start coordinates, which Divvy rounds to 0.01° (about 1 km), so dockless rides near a boundary can land in the neighbouring area. Rides outside the 77 areas (mostly Evanston) are "Outside Chicago". Boundaries: City of Chicago "Boundaries - Community Areas" (`data/raw/Boundaries_Community_Areas.geojson`, committed so Tableau can draw the polygons).
 - `is_holiday`: US federal holidays from the `holidays` package, on their observed dates (24 days in the window).
 - `station_rides` covers rides with a station only. Dockless rides count in the daily and hourly tables.
 
@@ -45,7 +50,7 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 
 **Raw data (about 480 MB, not in git).** Divvy trip zips come from [divvybikes.com/system-data](https://divvybikes.com/system-data), and the weather file is NOAA GHCN-Daily station USW00014819 (Chicago Midway). Put them anywhere and point `config.local.yaml` at them (the file is git-ignored, so the paths stay on your laptop). Paths can be relative to the repo root, e.g. Lin's copy is `../../MLOps/HW1/partb_data/divvy`. `dvc.yaml` reads the same two files, so `dvc repro` uses your paths too. `dvc.lock` records the raw paths (relative) and file hashes of the last full run.
 
-**Steps** (each one is a DVC stage and an OpenLineage job): `clean_trips` → `clean_weather` → `match_stations` → `aggregate_trips` → `join_weather` → `export`. `python pipeline/pipeline.py fetch_gbfs` saves a new dated GBFS snapshot. It isn't part of `dvc repro` because it needs the network; to use the new file, point `stations.gbfs_snapshot` in `config.yaml` at it.
+**Steps** (each one is a DVC stage and an OpenLineage job): `clean_trips` → `clean_weather` → `match_stations` → `aggregate_trips` → `join_weather` → `weather_sensitivity` → `export`. `python pipeline/pipeline.py fetch_gbfs` saves a new dated GBFS snapshot. It isn't part of `dvc repro` because it needs the network; to use the new file, point `stations.gbfs_snapshot` in `config.yaml` at it.
 
 ## Data notes (for the audit slide)
 

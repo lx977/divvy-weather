@@ -1,0 +1,157 @@
+community_area,member_casual,rides,station_rides,dockless_rides
+Albany Park,casual,8750,7631,1119
+Albany Park,member,19282,16426,2856
+Archer Heights,casual,1923,1791,132
+Archer Heights,member,1677,1576,101
+Armour Square,casual,27432,20863,6569
+Armour Square,member,37594,27457,10137
+Ashburn,casual,1618,1423,195
+Ashburn,member,621,431,190
+Auburn Gresham,casual,1170,890,280
+Auburn Gresham,member,1104,779,325
+Austin,casual,5560,4450,1110
+Austin,member,5736,3996,1740
+Avalon Park,casual,784,327,457
+Avalon Park,member,290,214,76
+Avondale,casual,23880,19805,4075
+Avondale,member,40695,33160,7535
+Belmont Cragin,casual,5516,4422,1094
+Belmont Cragin,member,7792,5326,2466
+Beverly,casual,1495,1057,438
+Beverly,member,863,601,262
+Bridgeport,casual,17577,14228,3349
+Bridgeport,member,35720,28771,6949
+Brighton Park,casual,4439,3895,544
+Brighton Park,member,3647,2896,751
+Burnside,casual,89,66,23
+Burnside,member,41,23,18
+Calumet Heights,casual,349,230,119
+Calumet Heights,member,171,129,42
+Chatham,casual,1820,1427,393
+Chatham,member,2074,1620,454
+Chicago Lawn,casual,1665,1404,261
+Chicago Lawn,member,1907,1436,471
+Clearing,casual,347,150,197
+Clearing,member,210,124,86
+Douglas,casual,27601,24405,3196
+Douglas,member,62102,57948,4154
+Dunning,casual,2937,2407,530
+Dunning,member,2085,1756,329
+East Garfield Park,casual,5059,4171,888
+East Garfield Park,member,5608,4714,894
+East Side,casual,1257,1148,109
+East Side,member,741,679,62
+Edgewater,casual,62131,46328,15803
+Edgewater,member,125995,90232,35763
+Edison Park,casual,223,120,103
+Edison Park,member,203,120,83
+Englewood,casual,2260,1452,808
+Englewood,member,1421,860,561
+Forest Glen,casual,1303,1022,281
+Forest Glen,member,2531,1819,712
+Fuller Park,casual,1157,880,277
+Fuller Park,member,1503,1164,339
+Gage Park,casual,2516,2032,484
+Gage Park,member,1932,1224,708
+Garfield Ridge,casual,1707,1439,268
+Garfield Ridge,member,744,667,77
+Grand Boulevard,casual,6172,5122,1050
+Grand Boulevard,member,8528,6511,2017
+Greater Grand Crossing,casual,2038,1380,658
+Greater Grand Crossing,member,2171,1412,759
+Hegewisch,casual,865,682,183
+Hegewisch,member,114,102,12
+Hermosa,casual,3600,3081,519
+Hermosa,member,7687,6476,1211
+Humboldt Park,casual,9679,5747,3932
+Humboldt Park,member,17723,9099,8624
+Hyde Park,casual,109753,91512,18241
+Hyde Park,member,271802,225781,46021
+Irving Park,casual,25061,18147,6914
+Irving Park,member,50262,35903,14359
+Jefferson Park,casual,3301,2459,842
+Jefferson Park,member,5260,3821,1439
+Kenwood,casual,8839,7739,1100
+Kenwood,member,18126,16279,1847
+Lake View,casual,436766,337637,99129
+Lake View,member,816686,642748,173938
+Lincoln Park,casual,528962,428004,100958
+Lincoln Park,member,889141,705265,183876
+Lincoln Square,casual,50038,42548,7490
+Lincoln Square,member,126062,107455,18607
+Logan Square,casual,148158,115481,32677
+Logan Square,member,283007,213921,69086
+Loop,casual,573563,510799,62764
+Loop,member,794477,703865,90612
+Lower West Side,casual,32978,30099,2879
+Lower West Side,member,64179,58545,5634
+Mckinley Park,casual,3360,2864,496
+Mckinley Park,member,5482,4320,1162
+Montclare,casual,605,580,25
+Montclare,member,648,624,24
+Morgan Park,casual,946,809,137
+Morgan Park,member,433,348,85
+Mount Greenwood,casual,500,417,83
+Mount Greenwood,member,158,139,19
+Near North Side,casual,873403,699615,173788
+Near North Side,member,1542843,1229179,313664
+Near South Side,casual,172637,154622,18015
+Near South Side,member,144269,127528,16741
+Near West Side,casual,382617,326645,55972
+Near West Side,member,1058186,910747,147439
+New City,casual,3568,2937,631
+New City,member,4790,3349,1441
+North Center,casual,55785,39989,15796
+North Center,member,113660,82537,31123
+North Lawndale,casual,5098,3695,1403
+North Lawndale,member,5658,3922,1736
+North Park,casual,5132,4531,601
+North Park,member,12985,11076,1909
+Norwood Park,casual,1465,1000,465
+Norwood Park,member,1943,1307,636
+Oakland,casual,1391,40,1351
+Oakland,member,2034,47,1987
+Ohare,casual,462,324,138
+Ohare,member,413,224,189
+Outside Chicago,casual,103129,33147,69982
+Outside Chicago,member,101798,37076,64722
+Portage Park,casual,7170,5949,1221
+Portage Park,member,8581,7042,1539
+Pullman,casual,928,533,395
+Pullman,member,294,226,68
+Riverdale,casual,217,146,71
+Riverdale,member,33,28,5
+Rogers Park,casual,31413,25379,6034
+Rogers Park,member,67902,53040,14862
+Roseland,casual,2821,2162,659
+Roseland,member,1400,1158,242
+South Chicago,casual,1380,1041,339
+South Chicago,member,1633,903,730
+South Deering,casual,1069,867,202
+South Deering,member,1083,670,413
+South Lawndale,casual,5183,4112,1071
+South Lawndale,member,8641,5758,2883
+South Shore,casual,4126,3131,995
+South Shore,member,6229,4510,1719
+Uptown,casual,145955,114902,31053
+Uptown,member,270236,211191,59045
+Washington Heights,casual,873,583,290
+Washington Heights,member,583,523,60
+Washington Park,casual,3064,2261,803
+Washington Park,member,4695,3050,1645
+West Elsdon,casual,673,460,213
+West Elsdon,member,359,284,75
+West Englewood,casual,864,629,235
+West Englewood,member,940,433,507
+West Garfield Park,casual,816,610,206
+West Garfield Park,member,728,494,234
+West Lawn,casual,1328,1106,222
+West Lawn,member,954,821,133
+West Pullman,casual,971,695,276
+West Pullman,member,250,158,92
+West Ridge,casual,12391,10983,1408
+West Ridge,member,29460,25571,3889
+West Town,casual,273972,209328,64644
+West Town,member,616172,463301,152871
+Woodlawn,casual,23267,19771,3496
+Woodlawn,member,51195,43526,7669

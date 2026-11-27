@@ -10,12 +10,12 @@ stages:
       nfiles: 25
     - path: config.yaml
       hash: md5
-      md5: c82be5df4db7b7f27a33430209173cd9
-      size: 858
+      md5: 2bc5e04b8888470e2817a4c3c015305a
+      size: 950
     - path: pipeline/pipeline.py
       hash: md5
-      md5: de941679bbf0ebf9ec46215db6e4f2c5
-      size: 27174
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
     outs:
     - path: data/interim/trips_clean
       hash: md5
@@ -31,12 +31,12 @@ stages:
       size: 2761584
     - path: config.yaml
       hash: md5
-      md5: c82be5df4db7b7f27a33430209173cd9
-      size: 858
+      md5: 2bc5e04b8888470e2817a4c3c015305a
+      size: 950
     - path: pipeline/pipeline.py
       hash: md5
-      md5: de941679bbf0ebf9ec46215db6e4f2c5
-      size: 27174
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
     outs:
     - path: data/interim/weather_daily.parquet
       hash: md5
@@ -47,8 +47,8 @@ stages:
     deps:
     - path: config.yaml
       hash: md5
-      md5: c82be5df4db7b7f27a33430209173cd9
-      size: 858
+      md5: 2bc5e04b8888470e2817a4c3c015305a
+      size: 950
     - path: data/interim/trips_clean
       hash: md5
       md5: 4de371732eeed279059ebf91830f1f7f.dir
@@ -60,8 +60,8 @@ stages:
       size: 681963
     - path: pipeline/pipeline.py
       hash: md5
-      md5: de941679bbf0ebf9ec46215db6e4f2c5
-      size: 27174
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
     outs:
     - path: data/processed/station_match.parquet
       hash: md5
@@ -72,8 +72,8 @@ stages:
     deps:
     - path: config.yaml
       hash: md5
-      md5: c82be5df4db7b7f27a33430209173cd9
-      size: 858
+      md5: 2bc5e04b8888470e2817a4c3c015305a
+      size: 950
     - path: data/interim/trips_clean
       hash: md5
       md5: 4de371732eeed279059ebf91830f1f7f.dir
@@ -83,23 +83,31 @@ stages:
       hash: md5
       md5: cc39dca23e22b721690a3a9e06270d5e
       size: 265285
+    - path: data/raw/Boundaries_Community_Areas.geojson
+      hash: md5
+      md5: 15ba50d668a1c42a4d1b8592a391a953
+      size: 2082874
     - path: pipeline/pipeline.py
       hash: md5
-      md5: de941679bbf0ebf9ec46215db6e4f2c5
-      size: 27174
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
     outs:
+    - path: data/processed/area_rides.parquet
+      hash: md5
+      md5: c97edaf0e2856976f37d0efe05175281
+      size: 7173
     - path: data/processed/daily_rides.parquet
       hash: md5
-      md5: 0fc7c430b7b72f61e8596a5e3cecd36a
-      size: 85297
+      md5: 7594f7efbe0f0920954b9d02aefcb839
+      size: 94974
     - path: data/processed/hourly_rides.parquet
       hash: md5
       md5: 17dfd0f537c73c60f9f54bd7eab52b95
       size: 4958
     - path: data/processed/station_rides.parquet
       hash: md5
-      md5: 0060830a496398fa6727a339f1ba5703
-      size: 164232
+      md5: 5e5aa3027727866e000811d2a116e29b
+      size: 169111
     - path: data/processed/trip_quality.parquet
       hash: md5
       md5: 6c904844f8efd384f78438a52bc775f7
@@ -113,24 +121,28 @@ stages:
       size: 27087
     - path: data/processed/daily_rides.parquet
       hash: md5
-      md5: 0fc7c430b7b72f61e8596a5e3cecd36a
-      size: 85297
+      md5: 7594f7efbe0f0920954b9d02aefcb839
+      size: 94974
     - path: pipeline/pipeline.py
       hash: md5
-      md5: de941679bbf0ebf9ec46215db6e4f2c5
-      size: 27174
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
     outs:
     - path: data/processed/daily_rides_weather.parquet
       hash: md5
-      md5: baed436c6232213d76d75c67b1e4344c
-      size: 52114
+      md5: 462b4ab52ee4d7c48abae7318022c113
+      size: 62236
   export:
     cmd: python pipeline/pipeline.py export
     deps:
+    - path: data/processed/area_rides.parquet
+      hash: md5
+      md5: c97edaf0e2856976f37d0efe05175281
+      size: 7173
     - path: data/processed/daily_rides_weather.parquet
       hash: md5
-      md5: baed436c6232213d76d75c67b1e4344c
-      size: 52114
+      md5: 462b4ab52ee4d7c48abae7318022c113
+      size: 62236
     - path: data/processed/hourly_rides.parquet
       hash: md5
       md5: 17dfd0f537c73c60f9f54bd7eab52b95
@@ -141,19 +153,39 @@ stages:
       size: 265285
     - path: data/processed/station_rides.parquet
       hash: md5
-      md5: 0060830a496398fa6727a339f1ba5703
-      size: 164232
+      md5: 5e5aa3027727866e000811d2a116e29b
+      size: 169111
     - path: data/processed/trip_quality.parquet
       hash: md5
       md5: 6c904844f8efd384f78438a52bc775f7
       size: 7592
+    - path: data/processed/weather_sensitivity.parquet
+      hash: md5
+      md5: f4c958ada087165baa3a4ad8d40a356a
+      size: 5402
     - path: pipeline/pipeline.py
       hash: md5
-      md5: de941679bbf0ebf9ec46215db6e4f2c5
-      size: 27174
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
     outs:
     - path: data/exports
       hash: md5
-      md5: 8069d18bb1c1997c131e87088d22fcbd.dir
-      size: 1346690
-      nfiles: 5
+      md5: e8c3f7db05dde6fc99dffd9b054ffc0c.dir
+      size: 1410975
+      nfiles: 7
+  weather_sensitivity:
+    cmd: python pipeline/pipeline.py weather_sensitivity
+    deps:
+    - path: data/processed/daily_rides_weather.parquet
+      hash: md5
+      md5: 462b4ab52ee4d7c48abae7318022c113
+      size: 62236
+    - path: pipeline/pipeline.py
+      hash: md5
+      md5: 6055725798c03cfb891c4ea82a409042
+      size: 32655
+    outs:
+    - path: data/processed/weather_sensitivity.parquet
+      hash: md5
+      md5: f4c958ada087165baa3a4ad8d40a356a
+      size: 5402

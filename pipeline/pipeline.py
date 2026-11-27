@@ -11,10 +11,11 @@ OpenLineage job (lineage.py) and one DVC stage (dvc.yaml).
   fetch_gbfs      GBFS feed (manual, network)   raw/gbfs_..._<date>.json
   match_stations  trips_clean + GBFS snapshot   processed/station_match
   aggregate_trips trips_clean + station_match   processed/daily_rides,
-                                                hourly_rides, station_rides,
-                                                trip_quality
+                  + community areas             hourly_rides, station_rides,
+                                                area_rides, trip_quality
   join_weather    daily_rides + weather         processed/daily_rides_weather
                   + US holidays
+  weather_sensitivity  daily_rides_weather      processed/weather_sensitivity
   export          processed hand-off tables     exports/*.csv
 
 Usage:  python pipeline/pipeline.py              # all steps but fetch_gbfs
@@ -34,6 +35,8 @@ import holidays
 import numpy as np
 import pandas as pd
 import yaml
+from shapely import STRtree, points
+from shapely.geometry import shape
 
 from lineage import lineage_run
 
@@ -74,7 +77,8 @@ INTERIM, PROCESSED, EXPORTS = (p(CFG["paths"][k]) for k in
                                ("interim", "processed", "exports"))
 TRIPS_DIR = os.path.join(INTERIM, "trips_clean")
 HANDOFF = ["daily_rides_weather", "hourly_rides", "station_rides",
-           "trip_quality", "station_match"]          # exported to CSV
+           "trip_quality", "station_match", "area_rides",
+           "weather_sensitivity"]                    # exported to CSV
 
 
 def out(name):
@@ -91,6 +95,7 @@ def ds(name):
 DS_DIVVY, DS_NOAA = "raw/divvy (trip zips)", "raw/noaa/USW00014819.csv"
 DS_TRIPS = "data/interim/trips_clean"
 DS_GBFS = CFG["stations"]["gbfs_snapshot"]
+DS_AREAS = CFG["community_areas"]
 
 
 # ------------------------------------------------------- trip adapter ----
@@ -445,29 +450,70 @@ def match_stations():
         print(by_era.div(by_era.sum(1), axis=0).map("{:.1%}".format))
 
 
+# -------------------------------------------------- community areas ----
+def area_lookup():
+    """Function (lat, lng arrays) -> community area name per point.
+
+    Uses the City of Chicago's 77 community-area polygons; points outside
+    them (Evanston, Oak Park...) get "Outside Chicago".
+    """
+    with open(p(DS_AREAS), encoding="utf-8") as fh:
+        feats = json.load(fh)["features"]
+    polys = [shape(f["geometry"]) for f in feats]
+    names = np.array([f["properties"]["community"].title() for f in feats]
+                     + ["Outside Chicago"], dtype=object)
+    tree = STRtree(polys)
+
+    def lookup(lat, lng):
+        idx = np.full(len(lat), len(polys))            # default: outside
+        ok = ~(np.isnan(lat) | np.isnan(lng))
+        pt, poly = tree.query(points(np.c_[lng[ok], lat[ok]]),
+                              predicate="within")
+        idx[np.flatnonzero(ok)[pt]] = poly
+        return np.where(ok, names[idx], None)
+    return lookup
+
+
 # ------------------------------------------------------- aggregates ----
 def aggregate_trips():
     """Clean trips -> daily / hourly / station / quality tables."""
-    outs = ["daily_rides", "hourly_rides", "station_rides", "trip_quality"]
+    outs = ["daily_rides", "hourly_rides", "station_rides", "area_rides",
+            "trip_quality"]
     with lineage_run(
             "aggregate_trips",
             "Aggregate clean trips to the study window: rides and duration "
             "per day x rider type x bike type; per weekday x hour; per GBFS "
             "station (start and end rides, active days, rides per dock per "
-            "day); plus the cleaning quality log.",
-            [DS_TRIPS, ds("station_match")], [ds(o) for o in outs]) as ctx:
+            "day, community area); per community area (station rides by "
+            "station location, dockless rides by their rounded start "
+            "coordinates); plus the cleaning quality log.",
+            [DS_TRIPS, ds("station_match"), DS_AREAS],
+            [ds(o) for o in outs]) as ctx:
         m = pd.read_parquet(out("station_match"))
         # station key: GBFS id if matched, else the raw trip name
         m["key"] = m["station_id"].fillna("raw:" + m["raw_name"])
         key = m.set_index(["raw_id", "raw_name"])["key"]
+        # one descriptive row per station key (GBFS fields, else trip data)
+        best = (m.sort_values("trips", ascending=False)
+                .drop_duplicates("key").set_index("key"))
+        best["start_station_name"] = best["gbfs_name"].fillna(
+            best["raw_name"])
+        best["lat"] = best["lat"].fillna(best["raw_lat"])
+        best["lng"] = best["lng"].fillna(best["raw_lng"])
+        area_of = area_lookup()
+        best["community_area"] = area_of(best["lat"].to_numpy(float),
+                                         best["lng"].to_numpy(float))
         daily, hourly, starts, ends, span, quality = [], [], [], [], [], []
+        areas = []
         for f in trip_files():
             t = read_trips(f)
             obs = {"observed": True}
+            t["dockless"] = t["start_station_name"].isna()
             daily.append(t.groupby(["date", "member_casual",
                                     "rideable_type"], **obs)
                          .agg(rides=("ride_id", "size"),
-                              total_min=("duration_min", "sum")))
+                              total_min=("duration_min", "sum"),
+                              dockless_rides=("dockless", "sum")))
             hourly.append(t.groupby(["weekday", "hour", "member_casual"],
                                     **obs).size().rename("rides"))
             for e, acc in (("start", starts), ("end", ends)):
@@ -478,6 +524,21 @@ def aggregate_trips():
                 acc.append(s.groupby(["key", "member_casual"], **obs)
                            .size())
                 span.append(s.groupby("key")["date"].agg(["min", "max"]))
+                if e == "start":
+                    areas.append(s.assign(area=s["key"].map(
+                        best["community_area"]), dockless=False)
+                        .groupby(["area", "member_casual", "dockless"],
+                                 **obs).size())
+            # dockless starts: coordinates are rounded to 0.01 degrees
+            dl = t.loc[t["dockless"],
+                       ["start_lat", "start_lng", "member_casual"]].round(2)
+            pts = dl[["start_lat", "start_lng"]].drop_duplicates()
+            pts["area"] = area_of(pts["start_lat"].to_numpy(float),
+                                  pts["start_lng"].to_numpy(float))
+            areas.append(dl.merge(pts, on=["start_lat", "start_lng"])
+                         .assign(dockless=True)
+                         .groupby(["area", "member_casual", "dockless"],
+                                  **obs).size())
             with open(f.replace(".parquet", ".quality.json"),
                       encoding="utf-8") as fh:
                 quality.append(json.load(fh))
@@ -493,16 +554,9 @@ def aggregate_trips():
               .join(combine(ends).rename("end_rides"), how="outer")
               .fillna(0).astype(int).reset_index()
               .merge(active, left_on="key", right_index=True))
-        # one descriptive row per station key (GBFS fields, else trip data)
-        best = (m.sort_values("trips", ascending=False)
-                .drop_duplicates("key").set_index("key"))
-        best["start_station_name"] = best["gbfs_name"].fillna(
-            best["raw_name"])
-        best["lat"] = best["lat"].fillna(best["raw_lat"])
-        best["lng"] = best["lng"].fillna(best["raw_lng"])
         st = st.join(best[["start_station_name", "station_id", "short_name",
                            "lat", "lng", "capacity", "is_public_rack",
-                           "match_method"]], on="key")
+                           "match_method", "community_area"]], on="key")
         docked = st["is_public_rack"].eq(0) & st["capacity"].gt(0)
         st["rides_per_dock_per_day"] = (
             (st["rides"] + st["end_rides"]) / st["capacity"]
@@ -510,13 +564,26 @@ def aggregate_trips():
         st = st[["start_station_name", "member_casual", "rides",
                  "station_id", "short_name", "lat", "lng", "capacity",
                  "is_public_rack", "end_rides", "active_days",
-                 "rides_per_dock_per_day", "match_method"]]
+                 "rides_per_dock_per_day", "match_method",
+                 "community_area"]]
+        ar = (combine(areas).rename("rides").reset_index()
+              .pivot_table(index=["area", "member_casual"],
+                           columns="dockless", values="rides",
+                           aggfunc="sum", fill_value=0, observed=True))
+        ar = pd.DataFrame({"station_rides": ar.get(False, 0),
+                           "dockless_rides": ar.get(True, 0)})
+        ar["rides"] = ar["station_rides"] + ar["dockless_rides"]
+        ar = ar.reset_index().rename(columns={"area": "community_area"})[
+            ["community_area", "member_casual", "rides", "station_rides",
+             "dockless_rides"]]
 
         tables = {
             "daily_rides": combine(daily).reset_index(),
             "hourly_rides": combine(hourly).reset_index(),
             "station_rides": st.sort_values(["start_station_name",
                                              "member_casual"]),
+            "area_rides": ar.sort_values(["community_area",
+                                          "member_casual"]),
             "trip_quality": pd.DataFrame(quality)[
                 ["month", "inner_file", "rows_raw", "duplicates",
                  "too_short", "too_long_or_negative", "label_matches_data",
@@ -550,6 +617,7 @@ def join_weather():
         wide["total_rides"] = wide.sum(axis=1)
         wide["avg_min"] = (d.groupby("date")["total_min"].sum()
                            / d.groupby("date")["rides"].sum())
+        dl = d.groupby("date")["dockless_rides"].sum()
         o = wide.reset_index().merge(w, on="date", how="left")
         o["weekday"] = o["date"].dt.day_name()
         o["is_weekend"] = o["date"].dt.dayofweek.ge(5).astype("int8")
@@ -559,12 +627,48 @@ def join_weather():
         o["holiday_name"] = o["date"].dt.date.map(us.get)
         o["is_holiday"] = o["holiday_name"].notna().astype("int8")
         o = o[[c for c in o if c != "holiday_name"] + ["holiday_name"]]
+        o["dockless_rides"] = o["date"].map(dl).astype(int)       # KPI 5
+        o["dockless_share"] = (o["dockless_rides"] / o["total_rides"]
+                               ).round(4)
         o.columns.name = None
         o.to_parquet(out("daily_rides_weather"), index=False)
         ctx["schemas"][ds("daily_rides_weather")] = o
         print("daily_rides_weather", o.shape,
               "| days without weather:", int(o["tavg_f"].isna().sum()),
               "| holidays:", int(o["is_holiday"].sum()))
+
+
+def weather_sensitivity():
+    """KPI 2: % change in daily rides per +10F and on rain days, by rider
+    type, from log-linear OLS:
+      log(rides) ~ tavg_f + rain_day + is_weekend + is_holiday + trend
+    exp(10 * b_temp) - 1 and exp(b_rain) - 1 are the reported effects."""
+    with lineage_run(
+            "weather_sensitivity",
+            "KPI 2: OLS of log daily rides on average temperature, rain "
+            "day, weekend, holiday and a linear trend, per rider type.",
+            [ds("daily_rides_weather")], [ds("weather_sensitivity")]) as ctx:
+        d = pd.read_parquet(out("daily_rides_weather"))
+        x = d[["tavg_f", "rain_day", "is_weekend", "is_holiday"]].astype(
+            float).assign(trend=(d["date"] - d["date"].min()).dt.days / 365,
+                          const=1.0)
+        rows = []
+        for who in ["casual", "member", "total"]:
+            y = np.log(d[f"{who}_rides"].to_numpy(float))
+            b, *_ = np.linalg.lstsq(x.to_numpy(), y, rcond=None)
+            r2 = 1 - ((y - x.to_numpy() @ b) ** 2).sum() / (
+                (y - y.mean()) ** 2).sum()
+            rows.append({"rider_type": who,
+                         "pct_per_10f": round(np.exp(10 * b[0]) - 1, 4),
+                         "pct_rain_day": round(np.exp(b[1]) - 1, 4),
+                         "pct_weekend": round(np.exp(b[2]) - 1, 4),
+                         "pct_holiday": round(np.exp(b[3]) - 1, 4),
+                         "pct_per_year_trend": round(np.exp(b[4]) - 1, 4),
+                         "r2": round(r2, 3), "n_days": len(y)})
+        o = pd.DataFrame(rows)
+        o.to_parquet(out("weather_sensitivity"), index=False)
+        ctx["schemas"][ds("weather_sensitivity")] = o
+        print(o.to_string(index=False))
 
 
 def export():
@@ -582,7 +686,7 @@ def export():
 STEPS = {"clean_trips": clean_trips, "clean_weather": clean_weather,
          "match_stations": match_stations,
          "aggregate_trips": aggregate_trips, "join_weather": join_weather,
-         "export": export}
+         "weather_sensitivity": weather_sensitivity, "export": export}
 
 if __name__ == "__main__":
     for folder in (INTERIM, PROCESSED, EXPORTS):

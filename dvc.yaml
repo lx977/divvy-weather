@@ -43,12 +43,15 @@ stages:
       - config.yaml
       - ${paths.interim}/trips_clean
       - ${paths.processed}/station_match.parquet
+      - ${community_areas}
     outs:
       - ${paths.processed}/daily_rides.parquet:
           cache: false
       - ${paths.processed}/hourly_rides.parquet:
           cache: false
       - ${paths.processed}/station_rides.parquet:
+          cache: false
+      - ${paths.processed}/area_rides.parquet:
           cache: false
       - ${paths.processed}/trip_quality.parquet:
           cache: false
@@ -63,6 +66,15 @@ stages:
       - ${paths.processed}/daily_rides_weather.parquet:
           cache: false
 
+  weather_sensitivity:
+    cmd: python pipeline/pipeline.py weather_sensitivity
+    deps:
+      - pipeline/pipeline.py
+      - ${paths.processed}/daily_rides_weather.parquet
+    outs:
+      - ${paths.processed}/weather_sensitivity.parquet:
+          cache: false
+
   export:
     cmd: python pipeline/pipeline.py export
     deps:
@@ -72,6 +84,8 @@ stages:
       - ${paths.processed}/station_rides.parquet
       - ${paths.processed}/trip_quality.parquet
       - ${paths.processed}/station_match.parquet
+      - ${paths.processed}/area_rides.parquet
+      - ${paths.processed}/weather_sensitivity.parquet
     outs:
       - ${paths.exports}:
           cache: false

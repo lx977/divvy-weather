@@ -11,6 +11,7 @@ config.local.yaml
 data/interim/
 data/raw/*
 !data/raw/gbfs_station_information_2026-11-26.json
+!data/raw/Boundaries_Community_Areas.geojson
 *.zip
 !pipeline/tests/fixtures/*.zip
 

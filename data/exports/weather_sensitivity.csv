@@ -1,0 +1,4 @@
+rider_type,pct_per_10f,pct_rain_day,pct_weekend,pct_holiday,pct_per_year_trend,r2,n_days
+casual,0.6403,-0.3461,0.3775,0.1107,0.0814,0.874,760
+member,0.3259,-0.2615,-0.2627,-0.3716,0.071,0.81,760
+total,0.4102,-0.2924,-0.0864,-0.2292,0.0767,0.837,760

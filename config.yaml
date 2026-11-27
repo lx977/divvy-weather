@@ -15,6 +15,8 @@ stations:
   gbfs_snapshot: data/raw/gbfs_station_information_2026-11-26.json
   max_match_m: 150         # nearest-coordinate fallback radius (docked stations)
 
+community_areas: data/raw/Boundaries_Community_Areas.geojson   # City of Chicago, 77 areas
+
 paths:
   interim: data/interim      # trip-level parquet, git-ignored
   processed: data/processed  # hand-off parquet (Streamlit)
