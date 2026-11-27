@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(ROOT, "model"))
 import forecast as fc  # noqa: E402
 
 COLORS = alt.Scale(domain=["casual", "member"],
-                   range=["#E8833A", "#3A6EA5"])
+                   range=["#E4572E", "#2A7F8E"])
 st.set_page_config(page_title="Weather-Ready Divvy", layout="wide")
 
 
@@ -157,7 +157,7 @@ with tab_test:
         y=alt.Y("rides:Q", title="Total rides per day"),
         color=alt.Color("series:N", title=None, scale=alt.Scale(
             domain=["actual", "model", "baseline"],
-            range=["black", "#3A6EA5", "#BBBBBB"]))),
+            range=["#1B2A30", "#2A7F8E", "#BBBBBB"]))),
         width="stretch")
     st.write(f"Trained on {metrics['train_days']} days before Jun 2026, "
              f"tested on {metrics['test_days']} unseen days "

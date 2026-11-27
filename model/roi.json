@@ -1,0 +1,76 @@
+{
+  "target_days": 32,
+  "pilot_stations": [
+    "Navy Pier",
+    "DuSable Lake Shore Dr & Monroe St",
+    "Michigan Ave & Oak St",
+    "Millennium Park",
+    "DuSable Lake Shore Dr & North Blvd",
+    "Shedd Aquarium",
+    "Theater on the Lake",
+    "Dusable Harbor",
+    "Michigan Ave & 8th St",
+    "Adler Planetarium",
+    "Montrose Harbor",
+    "Field Museum",
+    "Wells St & Concord Ln",
+    "Clark St & Armitage Ave",
+    "Clark St & Lincoln Ave",
+    "New St & Illinois St",
+    "Indiana Ave & Roosevelt Rd",
+    "Wabash Ave & Grand Ave",
+    "Michigan Ave & Washington St",
+    "Michigan Ave & Lake St"
+  ],
+  "pilot_share_of_casual_rides": 0.1497,
+  "casual_rides_at_pilot_on_target_days": 70362,
+  "single_ride_price_usd": 7.22,
+  "scenarios": {
+    "low": {
+      "extra_rides": 1689,
+      "revenue_usd": 6100,
+      "cost_usd": 24000,
+      "net_usd": -17900,
+      "roi": -0.75
+    },
+    "base": {
+      "extra_rides": 4222,
+      "revenue_usd": 21349,
+      "cost_usd": 19200,
+      "net_usd": 2149,
+      "roi": 0.11
+    },
+    "high": {
+      "extra_rides": 8443,
+      "revenue_usd": 54897,
+      "cost_usd": 14400,
+      "net_usd": 40497,
+      "roi": 2.81
+    }
+  },
+  "break_even_availability_gain": 0.045,
+  "assumptions": {
+    "unlock_usd": 1.0,
+    "classic_per_min_usd": 0.2,
+    "ebike_per_min_usd": 0.44,
+    "price_realisation": {
+      "low": 0.5,
+      "base": 0.7,
+      "high": 0.9
+    },
+    "elasticity": 1.2,
+    "availability_gain": {
+      "low": 0.02,
+      "base": 0.05,
+      "high": 0.1
+    },
+    "truck_hours_per_day": {
+      "low": 10,
+      "base": 8,
+      "high": 6
+    },
+    "truck_hour_usd": 75,
+    "pilot_stations": 20,
+    "warm_f": 70
+  }
+}

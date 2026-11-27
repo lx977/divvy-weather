@@ -11,7 +11,8 @@ Final project for Data Visualization Strategies & Techniques: Divvy bike-share d
 | `data/raw/` | Dated GBFS station snapshot (`gbfs_station_information_2026-11-26.json`) and Chicago community-area boundaries (GeoJSON). Raw trip and weather files stay outside git, see below |
 | `pipeline/` | `pipeline.py` (ingest, clean, join, KPI tables), `lineage.py` (OpenLineage events, `lineage_events.jsonl`), `tests/` (format adapter test) |
 | `notebooks/` | EDA notebook and its charts |
-| `deck/` | Week 4 scope deck |
+| `deck/` | Final deck `Weather_Ready_Divvy_Final.pptx` (rebuild: `python deck/deck_data.py && node deck/build_deck.js`; every number comes from `deck_data.json`), plus the Week 4 scope deck |
+| `docs/` | `viz_briefs.md` (one open-ended visualization brief per teammate), `demo_script.md` (15-minute run of show) |
 | `model/` | `forecast.py`: daily demand regression, same-day-last-year baseline, holdout test; `metrics.json` (holdout MAPE) and `forecast_holdout.csv` (per-day results) |
 | `app/` | Streamlit app (System B): `streamlit run app/app.py` |
 | `config.yaml`, `dvc.yaml` | Study window, cleaning rules, paths; pipeline stages for `dvc repro` |
@@ -64,6 +65,16 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 - **Appendix, LightGBM** (`python model/lgbm_appendix.py` → `model/metrics_lgbm.json`): same features and holdout, total MAPE 14.0% vs 14.0% for the linear model. It's no more accurate, so the interpretable linear model stays. Juneteenth is still under-forecast (26.6k vs 33.7k actual), because there are only two years of summer holidays to learn from.
 
 `streamlit run app/app.py`: pick a date and the weather and get forecast casual, member and total rides against the same day last year. It also shows the temperature response by rider type, the busiest docked stations to stage bikes at, and the holdout chart. The model refits on all days at start-up (under a second).
+
+## Value estimate (slide 9)
+
+`python model/roi.py` → `model/roi.json`. It's an illustrative range for a pilot at the 20 docked stations with the most casual starts, on warm weekend and holiday days (32 in the last 12 months). Every input that doesn't come from our data is listed in `ASSUMPTIONS` with its source:
+
+- 2026 Divvy single-ride prices
+- the Kabra, Belavina & Girotra (Management Science) availability elasticity
+- an assumed $75 per truck-hour
+
+Result: net −$17.9k / +$2.1k / +$40.5k (low / base / high). The pilot breaks even at a 4.5% availability gain.
 
 ## Data notes (for the audit slide)
 
