@@ -669,6 +669,44 @@
    "mape_linear": 0.1404
   }
  },
+ "noise": [
+  {
+   "temp_mae_f": 0,
+   "rain_call_wrong": 0.0,
+   "mape_model": 0.1404,
+   "mape_baseline": 0.2186
+  },
+  {
+   "temp_mae_f": 2,
+   "rain_call_wrong": 0.0,
+   "mape_model": 0.1437,
+   "mape_baseline": 0.2186
+  },
+  {
+   "temp_mae_f": 3,
+   "rain_call_wrong": 0.0,
+   "mape_model": 0.1472,
+   "mape_baseline": 0.2186
+  },
+  {
+   "temp_mae_f": 4,
+   "rain_call_wrong": 0.0,
+   "mape_model": 0.1522,
+   "mape_baseline": 0.2186
+  },
+  {
+   "temp_mae_f": 3,
+   "rain_call_wrong": 0.15,
+   "mape_model": 0.173,
+   "mape_baseline": 0.2186
+  },
+  {
+   "temp_mae_f": 4,
+   "rain_call_wrong": 0.15,
+   "mape_model": 0.1771,
+   "mape_baseline": 0.2186
+  }
+ ],
  "roi": {
   "target_days": 32,
   "pilot_stations": [
@@ -719,7 +757,8 @@
     "roi": 2.81
    }
   },
-  "break_even_availability_gain": 0.045,
+  "break_even_extra_rides": 3797,
+  "break_even_uplift": 0.054,
   "assumptions": {
    "unlock_usd": 1.0,
    "classic_per_min_usd": 0.2,
@@ -729,11 +768,10 @@
     "base": 0.7,
     "high": 0.9
    },
-   "elasticity": 1.2,
-   "availability_gain": {
-    "low": 0.02,
-    "base": 0.05,
-    "high": 0.1
+   "ride_uplift": {
+    "low": 0.024,
+    "base": 0.06,
+    "high": 0.12
    },
    "truck_hours_per_day": {
     "low": 10,

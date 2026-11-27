@@ -12,7 +12,7 @@ Deck: `deck/Weather_Ready_Divvy_Final.pptx` (speaker notes on every slide). Befo
 | 6:30 | 6 Stack | Why this stack: reproducible, right-sized, two tools for two jobs. |
 | 7:30 | 7 Monitor | **Tableau demo (2 min)**, see below. |
 | 9:30 | 8 Engine | **Streamlit demo (3 min)**, see below. H1: 14.0% vs 21.9% error. |
-| 12:30 | 9 Value | Pays back above a 4.5% availability gain; that gain is what the pilot measures. |
+| 12:30 | 9 Value | Pays back if the pilot adds about 3,800 casual rides (+5.4%) on warm weekends, measured against control stations. |
 | 13:30 | 10 Gate | The ask: a May–Sep 2027 pilot at 20 lakefront stations, about $19k of truck time. Then stop and take questions. |
 
 ## Tableau demo (System A, 2 min)
@@ -34,4 +34,6 @@ Deck: `deck/Weather_Ready_Divvy_Final.pptx` (speaker notes on every slide). Befo
 
 - **Why not a more complex model?** LightGBM scored the same (14.0%) and can't be explained to operations (appendix A).
 - **How do you know riders were lost at empty docks?** We don't, because public data can't show them. That's why the pilot logs dock status first (appendix B).
+- **The test used actual weather, but you'd only have a forecast?** Re-scored with forecast-like error (±3°F, 15% wrong rain calls): 17.3%, still below 21.9% (appendix A).
+- **It barely pays?** About $19k buys a measured answer before any system-wide spend; the upside case is +$40k, and trucks freed on cold days aren't counted yet.
 - **Capacity changes over time?** Yes. Capacity is a dated snapshot, and the pipeline can refresh it (`python pipeline/pipeline.py fetch_gbfs`).

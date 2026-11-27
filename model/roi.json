@@ -48,7 +48,8 @@
       "roi": 2.81
     }
   },
-  "break_even_availability_gain": 0.045,
+  "break_even_extra_rides": 3797,
+  "break_even_uplift": 0.054,
   "assumptions": {
     "unlock_usd": 1.0,
     "classic_per_min_usd": 0.2,
@@ -58,11 +59,10 @@
       "base": 0.7,
       "high": 0.9
     },
-    "elasticity": 1.2,
-    "availability_gain": {
-      "low": 0.02,
-      "base": 0.05,
-      "high": 0.1
+    "ride_uplift": {
+      "low": 0.024,
+      "base": 0.06,
+      "high": 0.12
     },
     "truck_hours_per_day": {
       "low": 10,

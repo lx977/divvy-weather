@@ -1,0 +1,38 @@
+[
+  {
+    "temp_mae_f": 0,
+    "rain_call_wrong": 0.0,
+    "mape_model": 0.1404,
+    "mape_baseline": 0.2186
+  },
+  {
+    "temp_mae_f": 2,
+    "rain_call_wrong": 0.0,
+    "mape_model": 0.1437,
+    "mape_baseline": 0.2186
+  },
+  {
+    "temp_mae_f": 3,
+    "rain_call_wrong": 0.0,
+    "mape_model": 0.1472,
+    "mape_baseline": 0.2186
+  },
+  {
+    "temp_mae_f": 4,
+    "rain_call_wrong": 0.0,
+    "mape_model": 0.1522,
+    "mape_baseline": 0.2186
+  },
+  {
+    "temp_mae_f": 3,
+    "rain_call_wrong": 0.15,
+    "mape_model": 0.173,
+    "mape_baseline": 0.2186
+  },
+  {
+    "temp_mae_f": 4,
+    "rain_call_wrong": 0.15,
+    "mape_model": 0.1771,
+    "mape_baseline": 0.2186
+  }
+]

@@ -25,6 +25,7 @@ const M = (x) => `${(x / 1e6).toFixed(2)}M`;
 const usd = (x) => `${x < 0 ? "−" : "+"}$${(Math.abs(x) / 1000).toFixed(1)}k`;
 const sens = Object.fromEntries(D.sensitivity.map((r) => [r.rider_type, r]));
 const T = D.metrics.total, roi = D.roi, sc = roi.scenarios;
+const NZ = D.noise.find((r) => r.temp_mae_f === 3 && r.rain_call_wrong > 0);  // stress test
 
 const pres = new pptxgen();
 pres.layout = "LAYOUT_16x9";               // 10 x 5.625 in, as the Week 4 deck
@@ -112,8 +113,19 @@ function card(s, x, y, w, h, head, body, headColor = C.accent2) {
   txt(s, body, { x: x + 0.15, y: y + 0.52, w: w - 0.3, h: h - 0.6,
     fontSize: 11, color: C.text1 });
 }
-// A clearly marked slot for a teammate's visual (dashed frame + brief name)
-function slot(s, x, y, w, h, label, detail) {
+// A teammate's visual: deck/visuals/<file> if it exists (fitted inside the
+// box, centred), else a dashed placeholder naming the brief. Teammates save
+// PNGs there instead of pasting into the .pptx, so rebuilding never loses them.
+function slot(s, x, y, w, h, label, detail, file) {
+  const png = path.join(__dirname, "visuals", file);
+  if (fs.existsSync(png)) {
+    const b = fs.readFileSync(png);                 // PNG header: width, height
+    const iw = b.readUInt32BE(16), ih = b.readUInt32BE(20);
+    const k = Math.min(w / iw, h / ih), dw = iw * k, dh = ih * k;
+    s.addImage({ path: png, x: x + (w - dw) / 2, y: y + (h - dh) / 2, w: dw, h: dh,
+      altText: label, objectName: id("visual") });
+    return;
+  }
   s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h, rectRadius: 0.08,
     fill: { color: C.background2 }, line: { color: C.accent3, width: 1.5,
       dashType: "dash" }, objectName: id("visual-slot") });
@@ -300,7 +312,7 @@ pres.addSection({ title: "Act III · Evidence" });
 {
   const s = content("Act III · Evidence", "Macro monitor: where the system strains",
     "Tableau System A: KPIs first, then where, then why");
-  slot(s, 0.5, 1.35, 6.1, 3.7, "Brief 2 visual + Tableau dashboard", "Paste the dashboard screenshot here (PNG, 1920 px wide)");
+  slot(s, 0.5, 1.35, 6.1, 3.7, "Brief 2 visual + Tableau dashboard", "Save as deck/visuals/brief2.png (1920 px wide), then rebuild", "brief2.png");
   const pts = [
     ["Cognitive hierarchy", "KPI bullet graphs on top; map and station detail below."],
     ["Pre-attentive colour", "Coral = casual, teal = member; everything else grey."],
@@ -314,24 +326,26 @@ pres.addSection({ title: "Act III · Evidence" });
 }
 {
   const s = content("Act III · Evidence", "Decision engine: steer the forecast",
-    `Streamlit System B: tomorrow's weather in, bikes and trucks out — ${pct(1 - T.mape_model / T.mape_baseline)} less error`);
-  slot(s, 0.5, 1.35, 4.5, 3.7, "Brief 1 visual", "Casual vs member weather response (PNG, 1920 px wide)");
-  stat(s, 5.3, 1.35, 2.1, pct(T.mape_model, 1), "model error (MAPE), Jun–Sep 2026", C.accent1);
+    `Streamlit System B: tomorrow's weather in, bikes and trucks out, with ${pct(1 - T.mape_model / T.mape_baseline)} less error`);
+  slot(s, 0.5, 1.35, 4.5, 3.7, "Brief 1 visual", "Save as deck/visuals/brief1.png (1920 px wide), then rebuild", "brief1.png");
+  stat(s, 5.3, 1.35, 2.1, pct(T.mape_model, 1), "model error (MAPE), Jun–Sep", C.accent1);
   stat(s, 7.45, 1.35, 2.1, pct(T.mape_baseline, 1), "same day last year", C.accent3);
+  txt(s, `With forecast weather instead of actual (±${NZ.temp_mae_f}°F, ${pct(NZ.rain_call_wrong)} wrong rain calls): ${pct(NZ.mape_model, 1)}, still below ${pct(T.mape_baseline, 1)}.`,
+    { x: 5.3, y: 2.38, w: 4.2, h: 0.3, fontSize: 10, color: C.accent5 });
   const MON = { "06": "Jun", "07": "Jul", "08": "Aug", "09": "Sep" };
   const ho = D.holdout, lab = ho.date.map((d) => (d.slice(8) === "01" ? MON[d.slice(5, 7)] : " "));
   s.addChart(pres.charts.LINE, [
     { name: "Actual", labels: lab, values: ho.total_actual },
     { name: "Model", labels: lab, values: ho.total_model },
     { name: "Same day last year", labels: lab, values: ho.total_baseline },
-  ], { x: 5.2, y: 2.45, w: 4.3, h: 2.6, chartColors: [H.dk1, MEMBER, GREY], lineSize: 1.5, lineDataSymbol: "none",
+  ], { x: 5.2, y: 2.75, w: 4.3, h: 2.3, chartColors: [H.dk1, MEMBER, GREY], lineSize: 1.5, lineDataSymbol: "none",
     showTitle: true, title: "Total rides per day on 122 unseen days", showLegend: true, legendPos: "t",
     catAxisLabelFrequency: 1, valAxisLabelFormatCode: "#,##0", ...axis, objectName: id("holdout") });
-  s.addNotes(`Live demo 2 (Streamlit, 3 min): pick a Saturday in June, slide temperature from 60 to 85°F, then add 0.5 in of rain; casual rides swing far more than member rides, and the station tab lists where to stage bikes. H1: trained before June 2026, tested on 122 days it never saw: MAPE ${pct(T.mape_model, 1)} vs ${pct(T.mape_baseline, 1)} for same-day-last-year (casual ${pct(D.metrics.casual.mape_model, 1)} vs ${pct(D.metrics.casual.mape_baseline, 1)}).`);
+  s.addNotes(`Live demo 2 (Streamlit, 3 min): pick a Saturday in June, slide temperature from 60 to 85°F, then add 0.5 in of rain; casual rides swing far more than member rides, and the station tab lists where to stage bikes. H1: trained before June 2026, tested on 122 days it never saw: MAPE ${pct(T.mape_model, 1)} vs ${pct(T.mape_baseline, 1)} for same-day-last-year (casual ${pct(D.metrics.casual.mape_model, 1)} vs ${pct(D.metrics.casual.mape_baseline, 1)}). That test uses the weather that actually happened; in operations Divvy only has a forecast. Re-scored with day-ahead forecast error added (temperature off by ~${NZ.temp_mae_f}°F, rain/dry wrong on ${pct(NZ.rain_call_wrong)} of days), error rises to ${pct(NZ.mape_model, 1)}: still better than the baseline. Rain calls matter more than temperature.`);
 }
 {
   const s = content("Act III · Evidence", "Value creation, risk and ROI",
-    `A lakefront pilot pays back if it lifts bike availability by ≥ ${pct(roi.break_even_availability_gain, 1)} on warm weekends`);
+    `The pilot pays back if it adds about ${(Math.round(roi.break_even_extra_rides / 100) * 100).toLocaleString("en-US")} casual rides (+${pct(roi.break_even_uplift, 1)}) on warm weekends`);
   const names = ["Low", "Base", "High"], keys = ["low", "base", "high"];
   s.addChart(pres.charts.BAR, [
     { name: "Extra revenue", labels: names, values: keys.map((x) => sc[x].revenue_usd / 1000) },
@@ -342,10 +356,10 @@ pres.addSection({ title: "Act III · Evidence" });
   stat(s, 0.5, 3.8, 1.5, usd(sc.low.net_usd), "net, low", C.accent5);
   stat(s, 2.05, 3.8, 1.5, usd(sc.base.net_usd), "net, base", C.accent1);
   stat(s, 3.6, 3.8, 1.5, usd(sc.high.net_usd), "net, high", C.accent1);
-  txt(s, `Assumptions (model/roi.py): $${roi.single_ride_price_usd} per casual ride at 2026 prices, 50–90% realised; +10% availability → +12% rides (Kabra et al., Management Science); $75 per truck-hour.`,
+  txt(s, `Assumptions (model/roi.py): $${roi.single_ride_price_usd} per casual ride at 2026 prices, 50–90% realised; ride uplift ${pct(roi.assumptions.ride_uplift.low, 1)}–${pct(roi.assumptions.ride_uplift.high)} (scenario); $75 per truck-hour.`,
     { x: 0.5, y: 4.62, w: 4.7, h: 0.45, fontSize: 10, color: C.accent5 });
-  slot(s, 5.4, 1.35, 4.1, 3.7, "Brief 3 visual", "When the forecast misses, and what it costs (PNG, 1920 px wide)");
-  s.addNotes(`Assumptions (model/roi.py, all editable): 2026 Divvy single-ride prices ($1 unlock, $0.20/min classic, $0.44/min e-bike → $${roi.single_ride_price_usd} per average casual ride, 50-90% realised for pass holders); +10% availability → +12% rides (Kabra, Belavina & Girotra, Management Science); one extra truck shift (6-10 h at $75/h) per warm weekend day. Honest read: the value hinges on the availability gain, which public data cannot measure — so the pilot measures it. Upside not counted: trucks freed on cold, rainy days, and converting warm-weekend casual riders into members.`);
+  slot(s, 5.4, 1.35, 4.1, 3.7, "Brief 3 visual", "Save as deck/visuals/brief3.png (1920 px wide), then rebuild", "brief3.png");
+  s.addNotes(`Assumptions (model/roi.py, all editable): 2026 Divvy single-ride prices ($1 unlock, $0.20/min classic, $0.44/min e-bike → $${roi.single_ride_price_usd} per average casual ride, 50-90% realised for pass holders); ride uplift at the pilot stations ${pct(roi.assumptions.ride_uplift.low, 1)} / ${pct(roi.assumptions.ride_uplift.base)} / ${pct(roi.assumptions.ride_uplift.high)} (scenario: public data never shows a rider who found an empty dock; Kabra, Belavina & Girotra 2020 show availability drives ridership in Paris); one extra truck shift (6-10 h at $75/h) per warm weekend day. The break-even needs no borrowed elasticity: about $${(sc.base.cost_usd / 1000).toFixed(0)}k of truck time is covered by ${roi.break_even_extra_rides.toLocaleString("en-US")} extra casual rides, ${pct(roi.break_even_uplift, 1)} of the ${roi.casual_rides_at_pilot_on_target_days.toLocaleString("en-US")} casual rides these stations get on those days, which the pilot measures against control stations. If pushed on "it barely pays": $${(sc.base.cost_usd / 1000).toFixed(0)}k buys a measured answer before any system-wide rollout; upside is +$${(sc.high.net_usd / 1000).toFixed(0)}k, and trucks freed on cold, rainy days are not counted yet.`);
 }
 {
   const s = content("Act III · Evidence", "Roadmap, governance and the decision gate",
@@ -354,7 +368,7 @@ pres.addSection({ title: "Act III · Evidence" });
     ["Jan – Mar 2027", "Build", "Daily forecast job; log live dock status to measure empty/full minutes"],
     ["Apr 2027", "Baseline", "Measure availability at 20 pilot + 20 control stations"],
     ["May – Sep", "Pilot", "Forecast-triggered truck shift on each warm weekend day"],
-    ["Oct 2027", "Gate", `Scale if availability +${pct(roi.break_even_availability_gain, 1)} and MAPE < 20%`],
+    ["Oct 2027", "Gate", `Scale if casual rides +${pct(roi.break_even_uplift, 1)} vs control and MAPE < 20%`],
   ];
   s.addShape(pres.shapes.LINE, { x: 0.7, y: 1.72, w: 8.6, h: 0, line: { color: C.accent3, width: 2 }, objectName: id("timeline") });
   phases.forEach(([when, h, b], i) => {
@@ -370,7 +384,7 @@ pres.addSection({ title: "Act III · Evidence" });
   txt(s, "THE DECISION TODAY", { x: 0.75, y: 3.92, w: 4, h: 0.25, fontSize: 11, bold: true, color: C.text2 });
   txt(s, `Approve a May–Sep 2027 pilot at the 20 busiest casual stations: one extra truck shift on each forecast warm weekend day (about $${(sc.base.cost_usd / 1000).toFixed(0)}k), plus dock-status logging to measure the gain.`,
     { x: 0.75, y: 4.2, w: 8.5, h: 0.8, fontSize: 15, bold: true, color: C.text2 });
-  s.addNotes("Close on the ask, then stop talking. Phased gates keep risk low: nothing scales unless the measured availability gain clears break-even and the forecast stays accurate. Governance is automated: the same pipeline, quality log and lineage that built this deck run monthly.");
+  s.addNotes("Close on the ask, then stop talking. Phased gates keep risk low: nothing scales unless the measured ride gain at pilot stations clears break-even and the forecast stays accurate. Governance is automated: the same pipeline, quality log and lineage that built this deck run monthly.");
 }
 
 // ======================================================= APPENDIX =======
@@ -389,12 +403,15 @@ pres.addSection({ title: "Appendix" });
   const head = (t) => ({ text: t, options: { bold: true, color: C.background1, fill: { color: C.text2 } } });
   const row = (lab, r) => [lab, pct(D.metrics[r].mape_model, 1), pct(D.metrics[r].mape_baseline, 1), pct(D.lgbm[r].mape_lgbm, 1)];
   s.addTable([[head("Holdout MAPE"), head("Regression"), head("Last year"), head("LightGBM")],
-    row("Casual", "casual"), row("Member", "member"), row("Total", "total")], {
-    x: 5.3, y: 1.4, w: 4.2, colW: [1.2, 1.0, 1.0, 1.0], fontSize: 11, color: C.text1, align: "center",
+    row("Casual", "casual"), row("Member", "member"), row("Total", "total"),
+    ["Forecast weather*", pct(NZ.mape_model, 1), pct(NZ.mape_baseline, 1), "–"]], {
+    x: 5.3, y: 1.4, w: 4.2, colW: [1.5, 0.9, 0.9, 0.9], fontSize: 11, color: C.text1, align: "center",
     border: { type: "solid", pt: 0.5, color: "D5DEE0" }, rowH: 0.34, objectName: id("mape") });
+  txt(s, `* Test-day weather blurred like a day-ahead forecast: temperature ±${NZ.temp_mae_f}°F (NWS day-1 error is ~2–4°F), rain/dry wrong on ${pct(NZ.rain_call_wrong)} of days; mean of 200 draws.`,
+    { x: 5.3, y: 3.2, w: 4.2, h: 0.45, fontSize: 9, color: C.accent5 });
   const srow = (r) => [r.rider_type[0].toUpperCase() + r.rider_type.slice(1), signed(r.pct_per_10f), signed(r.pct_rain_day), signed(r.pct_weekend), signed(r.pct_holiday)];
   s.addTable([[head("KPI 2"), head("+10°F"), head("Rain"), head("Weekend"), head("Holiday")], ...D.sensitivity.map(srow)], {
-    x: 5.3, y: 3.15, w: 4.2, colW: [0.9, 0.8, 0.8, 0.85, 0.85], fontSize: 11, color: C.text1, align: "center",
+    x: 5.3, y: 3.75, w: 4.2, colW: [0.9, 0.8, 0.8, 0.85, 0.85], fontSize: 11, color: C.text1, align: "center",
     border: { type: "solid", pt: 0.5, color: "D5DEE0" }, rowH: 0.34, objectName: id("sens") });
   s.addNotes("If asked why not a fancier model: LightGBM with the same features matches but does not beat the regression on total rides, and it cannot be explained to an operations lead. Known miss: Juneteenth is under-forecast because there are only two summers of holidays to learn from.");
 }

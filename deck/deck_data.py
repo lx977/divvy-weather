@@ -84,6 +84,7 @@ def main():
                       "total_baseline"]].to_dict("list"),
         "metrics": load_json("model", "metrics.json"),
         "lgbm": load_json("model", "metrics_lgbm.json"),
+        "noise": load_json("model", "metrics_noise.json"),
         "roi": load_json("model", "roi.json"),
     }
     with open(os.path.join(ROOT, "deck", "deck_data.json"), "w",

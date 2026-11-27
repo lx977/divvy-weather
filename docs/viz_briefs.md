@@ -2,7 +2,7 @@
 
 Each of you picks one brief and designs your own visualization for it. The instructor wants **novel** visuals, so these give you a question, the data and a few guardrails, not a design. Surprise us.
 
-All three end up as sheets in one Tableau workbook (System A, `tableau/divvy_weather.twbx`). Whoever finishes first also puts the dashboard frame together (see the end of this file). Each visual also gets a slide in the deck, so export a PNG at 1920 px wide.
+All three end up as sheets in one Tableau workbook (System A, `tableau/divvy_weather.twbx`). Whoever finishes first also puts the dashboard frame together (see the end of this file). Each visual also gets a slide in the deck. Export a PNG at 1920 px wide and save it as `deck/visuals/brief1.png`, `brief2.png` or `brief3.png` (your brief's number). The deck build places it on the slide automatically. **Don't paste images into the .pptx**: the deck is regenerated from data, and a rebuild would drop them.
 
 ## Shared guardrails
 

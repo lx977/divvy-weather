@@ -11,7 +11,7 @@ Final project for Data Visualization Strategies & Techniques: Divvy bike-share d
 | `data/raw/` | Dated GBFS station snapshot (`gbfs_station_information_2026-11-26.json`) and Chicago community-area boundaries (GeoJSON). Raw trip and weather files stay outside git, see below |
 | `pipeline/` | `pipeline.py` (ingest, clean, join, KPI tables), `lineage.py` (OpenLineage events, `lineage_events.jsonl`), `tests/` (format adapter test) |
 | `notebooks/` | EDA notebook and its charts |
-| `deck/` | Final deck `Weather_Ready_Divvy_Final.pptx` (rebuild: `python deck/deck_data.py && node deck/build_deck.js`; every number comes from `deck_data.json`), plus the Week 4 scope deck |
+| `deck/` | Final deck `Weather_Ready_Divvy_Final.pptx` (rebuild: `python deck/deck_data.py && node deck/build_deck.js`; every number comes from `deck_data.json`), plus the Week 4 scope deck. **Rule:** don't edit the .pptx by hand. Teammates save their visuals as `deck/visuals/brief1.png`, `brief2.png`, `brief3.png` and the build places them on slides 8, 7 and 9. Hand edits are allowed only after the final freeze, by one person (Teammate C) |
 | `docs/` | `viz_briefs.md` (one open-ended visualization brief per teammate), `demo_script.md` (15-minute run of show) |
 | `model/` | `forecast.py`: daily demand regression, same-day-last-year baseline, holdout test; `metrics.json` (holdout MAPE) and `forecast_holdout.csv` (per-day results) |
 | `app/` | Streamlit app (System B): `streamlit run app/app.py` |
@@ -62,6 +62,7 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 - **Model:** one linear regression per rider type on log(1 + daily rides). Features: `tavg_f` and its square, `precip_in`, `rain_day`, `snow_depth_in`, `wind_mph`, weekday, month, a linear trend, and holidays split by season (Apr–Sep vs. Oct–Mar), because summer holidays lift casual rides while winter ones cut both rider types. Total = casual + member. `snow_depth_in` is missing Apr–Oct because Midway only reports it Nov–Mar, so it's set to 0.
 - **Baseline:** rides on the same weekday a year earlier (364 days before).
 - **Holdout result (MAPE):** total 14.0% vs 21.9% for the baseline (36% less error); casual 17.4% vs 28.8%; member 13.4% vs 19.4%.
+- **With forecast weather** (`python model/forecast_noise.py` → `model/metrics_noise.json`): the holdout uses the weather that actually happened, but in operations only a day-ahead forecast is available. With the test-day weather blurred like a forecast (temperature ±3°F, about the NWS day-1 error, and the rain/dry call wrong on 15% of days, our assumption), total MAPE rises to 17.3%, still below the baseline's 21.9%. Wrong rain calls cost more than temperature error.
 - **Appendix, LightGBM** (`python model/lgbm_appendix.py` → `model/metrics_lgbm.json`): same features and holdout, total MAPE 14.0% vs 14.0% for the linear model. It's no more accurate, so the interpretable linear model stays. Juneteenth is still under-forecast (26.6k vs 33.7k actual), because there are only two years of summer holidays to learn from.
 
 `streamlit run app/app.py`: pick a date and the weather and get forecast casual, member and total rides against the same day last year. It also shows the temperature response by rider type, the busiest docked stations to stage bikes at, and the holdout chart. The model refits on all days at start-up (under a second).
@@ -71,10 +72,10 @@ Teammates don't need to run anything to use the tables: they are committed in `d
 `python model/roi.py` → `model/roi.json`. It's an illustrative range for a pilot at the 20 docked stations with the most casual starts, on warm weekend and holiday days (32 in the last 12 months). Every input that doesn't come from our data is listed in `ASSUMPTIONS` with its source:
 
 - 2026 Divvy single-ride prices
-- the Kabra, Belavina & Girotra (Management Science) availability elasticity
+- a ride-uplift scenario of 2.4% / 6% / 12% at the pilot stations (public data never shows riders who found an empty dock; Kabra, Belavina & Girotra 2020, *Management Science* 66(9), show availability drives ridership, but their elasticity isn't used)
 - an assumed $75 per truck-hour
 
-Result: net −$17.9k / +$2.1k / +$40.5k (low / base / high). The pilot breaks even at a 4.5% availability gain.
+Result: net −$17.9k / +$2.1k / +$40.5k (low / base / high). The headline doesn't depend on the uplift scenario: the pilot breaks even if it adds about 3,800 casual rides (+5.4%) at the pilot stations on warm weekends, which the pilot measures against control stations.
 
 ## Data notes (for the audit slide)
 

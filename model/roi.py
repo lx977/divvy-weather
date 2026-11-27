@@ -6,10 +6,13 @@ Divvy's books.
 Pilot: weather-triggered rebalancing at the 20 docked stations with the
 most casual starts, on warm weekend/holiday days (avg temp >= 70F).
 
-  extra rides  = casual rides at pilot stations on those days
-                 x availability gain x elasticity
+  extra rides  = casual rides at pilot stations on those days x uplift
   revenue      = extra rides x revenue per casual ride
   cost         = extra truck-hours on those days x cost per truck-hour
+
+The headline is the break-even: how many extra casual rides the pilot must
+add to cover its base-case cost. It needs no borrowed elasticity and the
+pilot measures it directly (pilot vs control stations).
 
 Run:  python model/roi.py   -> model/roi.json
 """
@@ -28,13 +31,12 @@ ASSUMPTIONS = {
     "ebike_per_min_usd": 0.44,
     # Day-pass and discounted riders pay less than the single-ride price
     "price_realisation": {"low": 0.5, "base": 0.7, "high": 0.9},
-    # Kabra, Belavina & Girotra, "Bike-Share Systems: Accessibility and
-    # Availability", Management Science (Paris Velib'):
-    # +10% bike availability -> about +12% ridership
-    "elasticity": 1.2,
-    # How much the pilot raises availability at pilot stations on
-    # target days (no stockout data in the public feed -> scenario)
-    "availability_gain": {"low": 0.02, "base": 0.05, "high": 0.10},
+    # Extra casual rides at pilot stations on target days from better bike
+    # availability. Scenario values: public trip data never records riders
+    # who found an empty dock. Kabra, Belavina & Girotra (2020, Management
+    # Science 66(9), Paris Velib') show availability drives ridership via
+    # lost sales; their exact elasticity is not used here.
+    "ride_uplift": {"low": 0.024, "base": 0.06, "high": 0.12},
     # Extra rebalancing: one truck + driver per target day
     "truck_hours_per_day": {"low": 10, "base": 8, "high": 6},
     "truck_hour_usd": 75,                 # driver + vehicle, assumption
@@ -72,7 +74,7 @@ def main():
            "casual_rides_at_pilot_on_target_days": round(base_rides),
            "single_ride_price_usd": round(price, 2), "scenarios": {}}
     for s in ["low", "base", "high"]:
-        extra = base_rides * a["availability_gain"][s] * a["elasticity"]
+        extra = base_rides * a["ride_uplift"][s]
         revenue = extra * price * a["price_realisation"][s]
         cost = len(target) * a["truck_hours_per_day"][s] * a["truck_hour_usd"]
         out["scenarios"][s] = {"extra_rides": round(extra),
@@ -80,11 +82,11 @@ def main():
                                "cost_usd": round(cost),
                                "net_usd": round(revenue - cost),
                                "roi": round(revenue / cost - 1, 2)}
-    # availability gain at which base-case revenue covers base-case cost
-    out["break_even_availability_gain"] = round(
-        len(target) * a["truck_hours_per_day"]["base"] * a["truck_hour_usd"]
-        / (base_rides * a["elasticity"] * price
-           * a["price_realisation"]["base"]), 4)
+    # extra rides at which base-case revenue covers base-case cost
+    be = (len(target) * a["truck_hours_per_day"]["base"] * a["truck_hour_usd"]
+          / (price * a["price_realisation"]["base"]))
+    out["break_even_extra_rides"] = round(be)
+    out["break_even_uplift"] = round(be / base_rides, 4)
     out["assumptions"] = a
     with open(os.path.join(ROOT, "model", "roi.json"), "w",
               encoding="utf-8") as fh:
